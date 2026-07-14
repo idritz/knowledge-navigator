@@ -14,7 +14,203 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          created_at: string
+          crop_type: string
+          driver_id: string | null
+          duration_days: number | null
+          facility_id: string | null
+          farmer_id: string
+          id: string
+          price_quoted: number
+          status: Database["public"]["Enums"]["booking_status"]
+          type: Database["public"]["Enums"]["booking_type"]
+          updated_at: string
+          volume_crates: number
+        }
+        Insert: {
+          created_at?: string
+          crop_type: string
+          driver_id?: string | null
+          duration_days?: number | null
+          facility_id?: string | null
+          farmer_id: string
+          id?: string
+          price_quoted?: number
+          status?: Database["public"]["Enums"]["booking_status"]
+          type: Database["public"]["Enums"]["booking_type"]
+          updated_at?: string
+          volume_crates: number
+        }
+        Update: {
+          created_at?: string
+          crop_type?: string
+          driver_id?: string | null
+          duration_days?: number | null
+          facility_id?: string | null
+          farmer_id?: string
+          id?: string
+          price_quoted?: number
+          status?: Database["public"]["Enums"]["booking_status"]
+          type?: Database["public"]["Enums"]["booking_type"]
+          updated_at?: string
+          volume_crates?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "storage_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          phone_number: string | null
+          rating_avg: number
+          region: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          verification_status: Database["public"]["Enums"]["verification_status"]
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string
+          id: string
+          phone_number?: string | null
+          rating_avg?: number
+          region?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          verification_status?: Database["public"]["Enums"]["verification_status"]
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone_number?: string | null
+          rating_avg?: number
+          region?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          verification_status?: Database["public"]["Enums"]["verification_status"]
+        }
+        Relationships: []
+      }
+      storage_facilities: {
+        Row: {
+          address_text: string
+          available_capacity_crates: number
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          power_source: Database["public"]["Enums"]["power_source"]
+          price_per_crate_per_day: number
+          status: Database["public"]["Enums"]["facility_status"]
+          total_capacity_crates: number
+          updated_at: string
+          verification_status: Database["public"]["Enums"]["facility_verification_status"]
+        }
+        Insert: {
+          address_text: string
+          available_capacity_crates: number
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+          power_source?: Database["public"]["Enums"]["power_source"]
+          price_per_crate_per_day: number
+          status?: Database["public"]["Enums"]["facility_status"]
+          total_capacity_crates: number
+          updated_at?: string
+          verification_status?: Database["public"]["Enums"]["facility_verification_status"]
+        }
+        Update: {
+          address_text?: string
+          available_capacity_crates?: number
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          power_source?: Database["public"]["Enums"]["power_source"]
+          price_per_crate_per_day?: number
+          status?: Database["public"]["Enums"]["facility_status"]
+          total_capacity_crates?: number
+          updated_at?: string
+          verification_status?: Database["public"]["Enums"]["facility_verification_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storage_facilities_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          availability_status: Database["public"]["Enums"]["vehicle_availability"]
+          capacity_kg: number
+          created_at: string
+          driver_id: string
+          home_region: string
+          id: string
+          updated_at: string
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+          verification_status: Database["public"]["Enums"]["facility_verification_status"]
+        }
+        Insert: {
+          availability_status?: Database["public"]["Enums"]["vehicle_availability"]
+          capacity_kg: number
+          created_at?: string
+          driver_id: string
+          home_region: string
+          id?: string
+          updated_at?: string
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+          verification_status?: Database["public"]["Enums"]["facility_verification_status"]
+        }
+        Update: {
+          availability_status?: Database["public"]["Enums"]["vehicle_availability"]
+          capacity_kg?: number
+          created_at?: string
+          driver_id?: string
+          home_region?: string
+          id?: string
+          updated_at?: string
+          vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
+          verification_status?: Database["public"]["Enums"]["facility_verification_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +219,21 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      booking_status:
+        | "pending"
+        | "confirmed"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+        | "disputed"
+      booking_type: "storage" | "transport"
+      facility_status: "active" | "paused"
+      facility_verification_status: "pending" | "verified" | "rejected"
+      power_source: "solar" | "grid" | "hybrid"
+      user_role: "farmer" | "driver" | "facility_owner" | "admin"
+      vehicle_availability: "available" | "on_job" | "offline"
+      vehicle_type: "motorcycle" | "van" | "truck"
+      verification_status: "unverified" | "pending" | "verified" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +360,23 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      booking_status: [
+        "pending",
+        "confirmed",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "disputed",
+      ],
+      booking_type: ["storage", "transport"],
+      facility_status: ["active", "paused"],
+      facility_verification_status: ["pending", "verified", "rejected"],
+      power_source: ["solar", "grid", "hybrid"],
+      user_role: ["farmer", "driver", "facility_owner", "admin"],
+      vehicle_availability: ["available", "on_job", "offline"],
+      vehicle_type: ["motorcycle", "van", "truck"],
+      verification_status: ["unverified", "pending", "verified", "rejected"],
+    },
   },
 } as const
