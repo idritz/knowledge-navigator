@@ -16,6 +16,9 @@ export type Database = {
     Tables: {
       bookings: {
         Row: {
+          checkin_date: string | null
+          checkout_date: string | null
+          confirm_deadline: string | null
           created_at: string
           crop_type: string
           driver_id: string | null
@@ -30,6 +33,9 @@ export type Database = {
           volume_crates: number
         }
         Insert: {
+          checkin_date?: string | null
+          checkout_date?: string | null
+          confirm_deadline?: string | null
           created_at?: string
           crop_type: string
           driver_id?: string | null
@@ -44,6 +50,9 @@ export type Database = {
           volume_crates: number
         }
         Update: {
+          checkin_date?: string | null
+          checkout_date?: string | null
+          confirm_deadline?: string | null
           created_at?: string
           crop_type?: string
           driver_id?: string | null
