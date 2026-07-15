@@ -14,7 +14,7 @@ export const brand = {
 
 export const nav = {
   links: [
-    { label: "Find Storage", to: "/" },
+    { label: "Find Storage", to: "/find-storage" },
     { label: "Book Transport", to: "/" },
     { label: "Partner Network", to: "/" },
   ],
@@ -52,3 +52,42 @@ export const powerSources = [
   { value: "grid", label: "Grid" },
   { value: "hybrid", label: "Hybrid" },
 ] as const;
+
+// Storage booking config
+export const cropTypes = [
+  "Maize",
+  "Tomatoes",
+  "Yam",
+  "Cassava",
+  "Peppers",
+  "Other",
+] as const;
+export type CropType = (typeof cropTypes)[number];
+
+export const bookingLabels = {
+  findStorage: "Find Storage",
+  bookThisFacility: "Book This Facility",
+  submitBooking: "Send booking request",
+  confirm: "Confirm",
+  decline: "Decline",
+  markCompleted: "Mark completed",
+  myBookings: "My Bookings",
+  bookingRequests: "Booking Requests",
+  activeBookings: "Confirmed & in-progress",
+  emptyFarmer: "You haven't booked any storage yet. Browse verified facilities to get started.",
+  emptyRequests: "No pending booking requests right now.",
+  emptyActive: "No confirmed bookings yet.",
+  confirmDeadlineHours: 2,
+} as const;
+
+export const bookingStatusStyles: Record<
+  "pending" | "confirmed" | "in_progress" | "completed" | "cancelled" | "disputed",
+  { label: string; className: string }
+> = {
+  pending: { label: "Pending", className: "bg-amber-100 text-amber-800 border-amber-200" },
+  confirmed: { label: "Confirmed", className: "bg-blue-100 text-blue-800 border-blue-200" },
+  in_progress: { label: "In progress", className: "bg-blue-100 text-blue-800 border-blue-200" },
+  completed: { label: "Completed", className: "bg-green-100 text-green-800 border-green-200" },
+  cancelled: { label: "Cancelled", className: "bg-gray-100 text-gray-700 border-gray-200" },
+  disputed: { label: "Disputed", className: "bg-red-100 text-red-800 border-red-200" },
+};
