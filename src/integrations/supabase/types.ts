@@ -225,10 +225,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      adjust_facility_capacity: {
-        Args: { _delta: number; _facility_id: string }
-        Returns: number
-      }
+      [_ in never]: never
     }
     Enums: {
       booking_status:
