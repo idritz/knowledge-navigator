@@ -69,7 +69,7 @@ function Dashboard() {
         </div>
 
         {profile.role === "farmer" && <FarmerDash farmerId={profile.id} />}
-        {profile.role === "driver" && <DriverDash />}
+        {profile.role === "driver" && <DriverDash driverId={profile.id} />}
         {profile.role === "facility_owner" && <FacilityOwnerDash ownerId={profile.id} />}
         {profile.role === "admin" && (
           <EmptyCard title="Admin console" body="The internal admin dashboard will land in a later build." />
