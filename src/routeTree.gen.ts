@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as FindStorageRouteImport } from './routes/find-storage'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as BookTransportRouteImport } from './routes/book-transport'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BookFacilityIdRouteImport } from './routes/book.$facilityId'
@@ -23,6 +24,11 @@ const FindStorageRoute = FindStorageRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookTransportRoute = BookTransportRouteImport.update({
+  id: '/book-transport',
+  path: '/book-transport',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -44,6 +50,7 @@ const BookFacilityIdRoute = BookFacilityIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/book-transport': typeof BookTransportRoute
   '/dashboard': typeof DashboardRoute
   '/find-storage': typeof FindStorageRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/book-transport': typeof BookTransportRoute
   '/dashboard': typeof DashboardRoute
   '/find-storage': typeof FindStorageRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
@@ -59,6 +67,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/book-transport': typeof BookTransportRoute
   '/dashboard': typeof DashboardRoute
   '/find-storage': typeof FindStorageRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
@@ -68,15 +77,23 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/book-transport'
     | '/dashboard'
     | '/find-storage'
     | '/book/$facilityId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/find-storage' | '/book/$facilityId'
+  to:
+    | '/'
+    | '/auth'
+    | '/book-transport'
+    | '/dashboard'
+    | '/find-storage'
+    | '/book/$facilityId'
   id:
     | '__root__'
     | '/'
     | '/auth'
+    | '/book-transport'
     | '/dashboard'
     | '/find-storage'
     | '/book/$facilityId'
@@ -85,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  BookTransportRoute: typeof BookTransportRoute
   DashboardRoute: typeof DashboardRoute
   FindStorageRoute: typeof FindStorageRoute
   BookFacilityIdRoute: typeof BookFacilityIdRoute
@@ -104,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/book-transport': {
+      id: '/book-transport'
+      path: '/book-transport'
+      fullPath: '/book-transport'
+      preLoaderRoute: typeof BookTransportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -133,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  BookTransportRoute: BookTransportRoute,
   DashboardRoute: DashboardRoute,
   FindStorageRoute: FindStorageRoute,
   BookFacilityIdRoute: BookFacilityIdRoute,
