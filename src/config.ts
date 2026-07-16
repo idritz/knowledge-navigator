@@ -15,7 +15,7 @@ export const brand = {
 export const nav = {
   links: [
     { label: "Find Storage", to: "/find-storage" },
-    { label: "Book Transport", to: "/" },
+    { label: "Book Transport", to: "/book-transport" },
     { label: "Partner Network", to: "/" },
   ],
   ctaPrimary: "Book Space/Vehicle",
@@ -23,6 +23,40 @@ export const nav = {
   signIn: "Sign in",
   signUp: "Get started",
 };
+
+export const vehicleTypes = [
+  { value: "motorcycle", label: "Motorcycle" },
+  { value: "tricycle", label: "Tricycle" },
+  { value: "car", label: "Car" },
+  { value: "van", label: "Van" },
+  { value: "truck", label: "Truck" },
+] as const;
+export type VehicleType = (typeof vehicleTypes)[number]["value"];
+
+export const transportLabels = {
+  pageTitle: "Book Transport",
+  pageSubtitle: "Find a verified driver for your cargo. Pay-as-you-go.",
+  submit: "Find drivers",
+  requestDriver: "Request This Driver",
+  matchesTitle: "Available drivers",
+  noMatchesTitle: "No drivers available right now",
+  noMatchesBody: (region: string, vehicle: string) =>
+    `No drivers currently available in ${region} for ${vehicle}. Your request has been sent to our matching team and we'll confirm a driver shortly.`,
+  awaitingAssignment: "Awaiting driver assignment",
+  myJobs: "My Jobs",
+  incomingJobs: "Incoming requests",
+  activeJobs: "Confirmed & in-progress jobs",
+  emptyIncoming: "No incoming transport requests yet.",
+  emptyActiveJobs: "No confirmed jobs yet.",
+  accept: "Accept",
+  decline: "Decline",
+  markCompleted: "Mark completed",
+  storageTag: "Storage",
+  transportTag: "Transport",
+  registerVehicleTitle: "Register your vehicle",
+  registerVehicleCta: "Add vehicle",
+  registerVehicleHint: "Add a vehicle so farmers can request you for transport jobs.",
+} as const;
 
 export const hero = {
   headline: "Zero Spoilage. Max Profit. Solar Cold Storage & On-Demand Logistics.",
