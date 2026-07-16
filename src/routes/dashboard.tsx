@@ -726,6 +726,24 @@ function formatDeadline(d: string | null) {
   return dt.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
+function vehicleLabel(v: VehicleType | null | undefined) {
+  if (!v) return "—";
+  return vehicleTypes.find((x) => x.value === v)?.label ?? v;
+}
+
+function TypeTag({ type }: { type: Booking["type"] }) {
+  const label = type === "storage" ? bookingLabels.myBookings && "Storage" : "Transport";
+  const cls =
+    type === "storage"
+      ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+      : "bg-sky-100 text-sky-800 border-sky-200";
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
 function StatusBadge({ status }: { status: BookingStatus }) {
   const s = bookingStatusStyles[status];
   return (
