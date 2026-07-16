@@ -21,15 +21,22 @@ export type Database = {
           confirm_deadline: string | null
           created_at: string
           crop_type: string
+          destination_region: string | null
           driver_id: string | null
           duration_days: number | null
           facility_id: string | null
           farmer_id: string
           id: string
+          match_method: Database["public"]["Enums"]["match_method"] | null
+          pickup_date: string | null
+          pickup_region: string | null
           price_quoted: number
           status: Database["public"]["Enums"]["booking_status"]
           type: Database["public"]["Enums"]["booking_type"]
           updated_at: string
+          vehicle_type_requested:
+            | Database["public"]["Enums"]["vehicle_type"]
+            | null
           volume_crates: number
         }
         Insert: {
@@ -38,15 +45,22 @@ export type Database = {
           confirm_deadline?: string | null
           created_at?: string
           crop_type: string
+          destination_region?: string | null
           driver_id?: string | null
           duration_days?: number | null
           facility_id?: string | null
           farmer_id: string
           id?: string
+          match_method?: Database["public"]["Enums"]["match_method"] | null
+          pickup_date?: string | null
+          pickup_region?: string | null
           price_quoted?: number
           status?: Database["public"]["Enums"]["booking_status"]
           type: Database["public"]["Enums"]["booking_type"]
           updated_at?: string
+          vehicle_type_requested?:
+            | Database["public"]["Enums"]["vehicle_type"]
+            | null
           volume_crates: number
         }
         Update: {
@@ -55,15 +69,22 @@ export type Database = {
           confirm_deadline?: string | null
           created_at?: string
           crop_type?: string
+          destination_region?: string | null
           driver_id?: string | null
           duration_days?: number | null
           facility_id?: string | null
           farmer_id?: string
           id?: string
+          match_method?: Database["public"]["Enums"]["match_method"] | null
+          pickup_date?: string | null
+          pickup_region?: string | null
           price_quoted?: number
           status?: Database["public"]["Enums"]["booking_status"]
           type?: Database["public"]["Enums"]["booking_type"]
           updated_at?: string
+          vehicle_type_requested?:
+            | Database["public"]["Enums"]["vehicle_type"]
+            | null
           volume_crates?: number
         }
         Relationships: [
@@ -238,10 +259,11 @@ export type Database = {
       booking_type: "storage" | "transport"
       facility_status: "active" | "paused"
       facility_verification_status: "pending" | "verified" | "rejected"
+      match_method: "self_selected" | "admin_assisted"
       power_source: "solar" | "grid" | "hybrid"
       user_role: "farmer" | "driver" | "facility_owner" | "admin"
       vehicle_availability: "available" | "on_job" | "offline"
-      vehicle_type: "motorcycle" | "van" | "truck"
+      vehicle_type: "motorcycle" | "van" | "truck" | "tricycle" | "car"
       verification_status: "unverified" | "pending" | "verified" | "rejected"
     }
     CompositeTypes: {
@@ -381,10 +403,11 @@ export const Constants = {
       booking_type: ["storage", "transport"],
       facility_status: ["active", "paused"],
       facility_verification_status: ["pending", "verified", "rejected"],
+      match_method: ["self_selected", "admin_assisted"],
       power_source: ["solar", "grid", "hybrid"],
       user_role: ["farmer", "driver", "facility_owner", "admin"],
       vehicle_availability: ["available", "on_job", "offline"],
-      vehicle_type: ["motorcycle", "van", "truck"],
+      vehicle_type: ["motorcycle", "van", "truck", "tricycle", "car"],
       verification_status: ["unverified", "pending", "verified", "rejected"],
     },
   },

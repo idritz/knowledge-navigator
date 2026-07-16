@@ -2,11 +2,12 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { bookingLabels, bookingStatusStyles, powerSources } from "@/config";
+import { bookingLabels, bookingStatusStyles, powerSources, transportLabels, vehicleTypes, type VehicleType } from "@/config";
 import type { Database } from "@/integrations/supabase/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Facility = Database["public"]["Tables"]["storage_facilities"]["Row"];
+type Vehicle = Database["public"]["Tables"]["vehicles"]["Row"];
 type Booking = Database["public"]["Tables"]["bookings"]["Row"];
 type BookingStatus = Booking["status"];
 
@@ -68,7 +69,7 @@ function Dashboard() {
         </div>
 
         {profile.role === "farmer" && <FarmerDash farmerId={profile.id} />}
-        {profile.role === "driver" && <DriverDash />}
+        {profile.role === "driver" && <DriverDash driverId={profile.id} />}
         {profile.role === "facility_owner" && <FacilityOwnerDash ownerId={profile.id} />}
         {profile.role === "admin" && (
           <EmptyCard title="Admin console" body="The internal admin dashboard will land in a later build." />
@@ -85,16 +86,26 @@ function roleLabel(r: Profile["role"]) {
 
 // ---------- FARMER ----------
 
-type BookingWithFacility = Booking & { facility?: Pick<Facility, "id" | "name"> | null };
+type BookingWithRelations = Booking & {
+  facility?: Pick<Facility, "id" | "name"> | null;
+  driver?: Pick<Profile, "id" | "full_name" | "phone_number"> | null;
+};
+
+async function releaseDriverVehicle(driverId: string) {
+  await supabase
+    .from("vehicles")
+    .update({ availability_status: "available" })
+    .eq("driver_id", driverId)
+    .eq("availability_status", "on_job");
+}
 
 function FarmerDash({ farmerId }: { farmerId: string }) {
-  const [bookings, setBookings] = useState<BookingWithFacility[]>([]);
+  const [bookings, setBookings] = useState<BookingWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    // Auto-expire pending bookings whose deadline has passed
     await supabase
       .from("bookings")
       .update({ status: "cancelled" })
@@ -104,24 +115,28 @@ function FarmerDash({ farmerId }: { farmerId: string }) {
 
     const { data, error } = await supabase
       .from("bookings")
-      .select("*, facility:storage_facilities(id,name)")
+      .select(
+        "*, facility:storage_facilities(id,name), driver:profiles!bookings_driver_id_fkey(id,full_name,phone_number)",
+      )
       .eq("farmer_id", farmerId)
-      .eq("type", "storage")
       .order("created_at", { ascending: false });
     if (error) setErr(error.message);
-    setBookings((data as BookingWithFacility[]) ?? []);
+    setBookings((data as BookingWithRelations[]) ?? []);
     setLoading(false);
   }, [farmerId]);
 
   useEffect(() => { load(); }, [load]);
 
-  async function markCompleted(b: BookingWithFacility) {
+  async function markCompleted(b: BookingWithRelations) {
     setErr(null);
     const { error } = await supabase
       .from("bookings")
       .update({ status: "completed" })
       .eq("id", b.id);
     if (error) { setErr(error.message); return; }
+    if (b.type === "transport" && b.driver_id) {
+      await releaseDriverVehicle(b.driver_id);
+    }
     await load();
   }
 
@@ -129,12 +144,20 @@ function FarmerDash({ farmerId }: { farmerId: string }) {
     <section className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">{bookingLabels.myBookings}</h2>
-        <Link
-          to="/find-storage"
-          className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-brand-foreground hover:opacity-90"
-        >
-          {bookingLabels.findStorage}
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            to="/find-storage"
+            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent"
+          >
+            {bookingLabels.findStorage}
+          </Link>
+          <Link
+            to="/book-transport"
+            className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-brand-foreground hover:opacity-90"
+          >
+            {transportLabels.pageTitle}
+          </Link>
+        </div>
       </div>
       {err && <ErrBox>{err}</ErrBox>}
       {loading ? (
@@ -147,10 +170,31 @@ function FarmerDash({ farmerId }: { farmerId: string }) {
             <li key={b.id} className="rounded-xl border border-border bg-card p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h3 className="font-semibold">{b.facility?.name ?? "Facility"}</h3>
-                  <p className="text-xs text-muted-foreground">
-                    {b.crop_type} · {b.volume_crates} crates · {b.checkin_date} → {b.checkout_date}
-                  </p>
+                  <div className="mb-1 flex items-center gap-2">
+                    <TypeTag type={b.type} />
+                  </div>
+                  {b.type === "storage" ? (
+                    <>
+                      <h3 className="font-semibold">{b.facility?.name ?? "Facility"}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {b.crop_type} · {b.volume_crates} crates · {b.checkin_date} → {b.checkout_date}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="font-semibold">
+                        {b.pickup_region} → {b.destination_region}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {b.crop_type} · {b.volume_crates} crates · {vehicleLabel(b.vehicle_type_requested)} · Pickup {b.pickup_date}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Driver: {b.driver?.full_name
+                          ? `${b.driver.full_name}${b.driver.phone_number ? ` · ${b.driver.phone_number}` : ""}`
+                          : transportLabels.awaitingAssignment}
+                      </p>
+                    </>
+                  )}
                 </div>
                 <StatusBadge status={b.status} />
               </div>
@@ -176,18 +220,238 @@ function FarmerDash({ farmerId }: { farmerId: string }) {
   );
 }
 
-function DriverDash() {
+// ---------- DRIVER ----------
+
+type BookingWithFarmer = Booking & { farmer?: Pick<Profile, "id" | "full_name" | "phone_number"> | null };
+
+function DriverDash({ driverId }: { driverId: string }) {
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [pending, setPending] = useState<BookingWithFarmer[]>([]);
+  const [active, setActive] = useState<BookingWithFarmer[]>([]);
+  const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  // vehicle form state
+  const [vType, setVType] = useState<VehicleType>("van");
+  const [homeRegion, setHomeRegion] = useState("");
+  const [capacityKg, setCapacityKg] = useState<number>(500);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    // Auto-expire pending assigned to this driver
+    await supabase
+      .from("bookings")
+      .update({ status: "cancelled" })
+      .eq("driver_id", driverId)
+      .eq("status", "pending")
+      .lt("confirm_deadline", new Date().toISOString());
+
+    const [{ data: veh }, { data: bks }] = await Promise.all([
+      supabase.from("vehicles").select("*").eq("driver_id", driverId).order("created_at", { ascending: false }),
+      supabase
+        .from("bookings")
+        .select("*, farmer:profiles!bookings_farmer_id_fkey(id,full_name,phone_number)")
+        .eq("driver_id", driverId)
+        .eq("type", "transport")
+        .order("created_at", { ascending: false }),
+    ]);
+    setVehicles(veh ?? []);
+    const list = (bks as BookingWithFarmer[]) ?? [];
+    setPending(list.filter((b) => b.status === "pending"));
+    setActive(list.filter((b) => b.status === "confirmed" || b.status === "in_progress"));
+    setLoading(false);
+  }, [driverId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function saveVehicle(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true); setErr(null);
+    const { error } = await supabase.from("vehicles").insert({
+      driver_id: driverId,
+      vehicle_type: vType,
+      home_region: homeRegion,
+      capacity_kg: capacityKg,
+      availability_status: "available",
+    });
+    setBusy(false);
+    if (error) { setErr(error.message); return; }
+    setShowForm(false);
+    setHomeRegion("");
+    await load();
+  }
+
+  async function accept(b: BookingWithFarmer) {
+    setErr(null);
+    const { error } = await supabase
+      .from("bookings")
+      .update({ status: "confirmed" })
+      .eq("id", b.id);
+    if (error) { setErr(error.message); return; }
+    if (b.vehicle_type_requested) {
+      await supabase
+        .from("vehicles")
+        .update({ availability_status: "on_job" })
+        .eq("driver_id", driverId)
+        .eq("vehicle_type", b.vehicle_type_requested)
+        .eq("availability_status", "available");
+    }
+    await load();
+  }
+
+  async function decline(b: BookingWithFarmer) {
+    setErr(null);
+    const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", b.id);
+    if (error) { setErr(error.message); return; }
+    await load();
+  }
+
+  async function complete(b: BookingWithFarmer) {
+    setErr(null);
+    const { error } = await supabase.from("bookings").update({ status: "completed" }).eq("id", b.id);
+    if (error) { setErr(error.message); return; }
+    await releaseDriverVehicle(driverId);
+    await load();
+  }
+
   return (
-    <EmptyCard
-      title="My Jobs"
-      body="No transport jobs yet. Job matching and acceptance arrive in the next build."
-    />
+    <section className="space-y-8">
+      {/* Vehicles */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">My vehicles</h2>
+          {!showForm && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-brand-foreground hover:opacity-90"
+            >
+              {transportLabels.registerVehicleCta}
+            </button>
+          )}
+        </div>
+        {vehicles.length === 0 && !showForm && (
+          <EmptyCard title={transportLabels.registerVehicleTitle} body={transportLabels.registerVehicleHint} />
+        )}
+        {vehicles.length > 0 && (
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {vehicles.map((v) => (
+              <li key={v.id} className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="font-semibold capitalize">{vehicleLabel(v.vehicle_type)}</h3>
+                    <p className="text-xs text-muted-foreground">{v.home_region} · {v.capacity_kg} kg</p>
+                  </div>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs capitalize">{v.availability_status}</span>
+                </div>
+                <p className="mt-2 text-[10px] uppercase tracking-wide text-muted-foreground">
+                  Verification: {v.verification_status}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+        {showForm && (
+          <form onSubmit={saveVehicle} className="rounded-xl border border-border bg-card p-5 space-y-3">
+            <h3 className="font-semibold">New vehicle</h3>
+            <Field label="Vehicle type">
+              <select value={vType} onChange={(e) => setVType(e.target.value as VehicleType)} className={inputCls}>
+                {vehicleTypes.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
+              </select>
+            </Field>
+            <Field label="Home region">
+              <input required value={homeRegion} onChange={(e) => setHomeRegion(e.target.value)} placeholder="e.g. Abuja" className={inputCls} />
+            </Field>
+            <Field label="Capacity (kg)">
+              <input required type="number" min={1} value={capacityKg} onChange={(e) => setCapacityKg(parseInt(e.target.value) || 0)} className={inputCls} />
+            </Field>
+            {err && <ErrBox>{err}</ErrBox>}
+            <div className="flex gap-2">
+              <button disabled={busy} className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground hover:opacity-90 disabled:opacity-60">
+                {busy ? "Saving…" : "Save vehicle"}
+              </button>
+              <button type="button" onClick={() => setShowForm(false)} className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent">
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      {/* Jobs */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold">{transportLabels.myJobs}</h2>
+        {err && <ErrBox>{err}</ErrBox>}
+        <h3 className="text-base font-semibold">{transportLabels.incomingJobs}</h3>
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : pending.length === 0 ? (
+          <EmptyCard title="No incoming jobs" body={transportLabels.emptyIncoming} />
+        ) : (
+          <ul className="space-y-3">
+            {pending.map((b) => (
+              <li key={b.id} className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold">{b.pickup_region} → {b.destination_region}</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {b.crop_type} · {b.volume_crates} crates · {vehicleLabel(b.vehicle_type_requested)} · Pickup {b.pickup_date}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      From {b.farmer?.full_name || "Farmer"}{b.farmer?.phone_number ? ` · ${b.farmer.phone_number}` : ""}
+                    </p>
+                  </div>
+                  <StatusBadge status={b.status} />
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <button onClick={() => accept(b)} className="rounded-md bg-brand px-3 py-1.5 text-sm font-semibold text-brand-foreground hover:opacity-90">
+                    {transportLabels.accept}
+                  </button>
+                  <button onClick={() => decline(b)} className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent">
+                    {transportLabels.decline}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <h3 className="pt-2 text-base font-semibold">{transportLabels.activeJobs}</h3>
+        {active.length === 0 ? (
+          <EmptyCard title="Nothing active" body={transportLabels.emptyActiveJobs} />
+        ) : (
+          <ul className="space-y-3">
+            {active.map((b) => (
+              <li key={b.id} className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold">{b.pickup_region} → {b.destination_region}</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {b.crop_type} · {b.volume_crates} crates · Pickup {b.pickup_date}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      For {b.farmer?.full_name || "Farmer"}{b.farmer?.phone_number ? ` · ${b.farmer.phone_number}` : ""}
+                    </p>
+                  </div>
+                  <StatusBadge status={b.status} />
+                </div>
+                <div className="mt-3">
+                  <button onClick={() => complete(b)} className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent">
+                    {transportLabels.markCompleted}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
   );
 }
 
 // ---------- FACILITY OWNER ----------
 
-type BookingWithFarmer = Booking & { farmer?: Pick<Profile, "id" | "full_name" | "phone_number"> | null };
 
 function FacilityOwnerDash({ ownerId }: { ownerId: string }) {
   const [facilities, setFacilities] = useState<Facility[]>([]);
@@ -460,6 +724,24 @@ function formatDeadline(d: string | null) {
   if (!d) return "—";
   const dt = new Date(d);
   return dt.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
+
+function vehicleLabel(v: VehicleType | null | undefined) {
+  if (!v) return "—";
+  return vehicleTypes.find((x) => x.value === v)?.label ?? v;
+}
+
+function TypeTag({ type }: { type: Booking["type"] }) {
+  const label = type === "storage" ? "Storage" : "Transport";
+  const cls =
+    type === "storage"
+      ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+      : "bg-sky-100 text-sky-800 border-sky-200";
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${cls}`}>
+      {label}
+    </span>
+  );
 }
 
 function StatusBadge({ status }: { status: BookingStatus }) {
