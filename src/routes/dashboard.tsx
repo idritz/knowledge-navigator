@@ -452,7 +452,6 @@ function DriverDash({ driverId }: { driverId: string }) {
 
 // ---------- FACILITY OWNER ----------
 
-type BookingWithFarmer = Booking & { farmer?: Pick<Profile, "id" | "full_name" | "phone_number"> | null };
 
 function FacilityOwnerDash({ ownerId }: { ownerId: string }) {
   const [facilities, setFacilities] = useState<Facility[]>([]);
