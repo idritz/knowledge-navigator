@@ -2,11 +2,12 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { bookingLabels, bookingStatusStyles, powerSources } from "@/config";
+import { bookingLabels, bookingStatusStyles, powerSources, transportLabels, vehicleTypes, type VehicleType } from "@/config";
 import type { Database } from "@/integrations/supabase/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Facility = Database["public"]["Tables"]["storage_facilities"]["Row"];
+type Vehicle = Database["public"]["Tables"]["vehicles"]["Row"];
 type Booking = Database["public"]["Tables"]["bookings"]["Row"];
 type BookingStatus = Booking["status"];
 
