@@ -732,7 +732,7 @@ function vehicleLabel(v: VehicleType | null | undefined) {
 }
 
 function TypeTag({ type }: { type: Booking["type"] }) {
-  const label = type === "storage" ? bookingLabels.myBookings && "Storage" : "Transport";
+  const label = type === "storage" ? "Storage" : "Transport";
   const cls =
     type === "storage"
       ? "bg-emerald-100 text-emerald-800 border-emerald-200"
