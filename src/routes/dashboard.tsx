@@ -69,10 +69,16 @@ function Dashboard() {
         </div>
 
         {profile.role === "farmer" && <FarmerDash farmerId={profile.id} />}
-        {profile.role === "driver" && <DriverDash driverId={profile.id} />}
+        {profile.role === "driver" && <DriverDash driverId={profile.id} verified={profile.verification_status === "verified"} />}
         {profile.role === "facility_owner" && <FacilityOwnerDash ownerId={profile.id} />}
         {profile.role === "admin" && (
-          <EmptyCard title="Admin console" body="The internal admin dashboard will land in a later build." />
+          <div className="rounded-xl border border-border bg-card p-6">
+            <h2 className="text-lg font-semibold">Admin console</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Review verification submissions and monitor live bookings.</p>
+            <Link to="/admin" className="mt-3 inline-block rounded-md bg-brand px-3 py-1.5 text-sm font-semibold text-brand-foreground hover:opacity-90">
+              Open admin dashboard
+            </Link>
+          </div>
         )}
       </main>
       <SiteFooter />
