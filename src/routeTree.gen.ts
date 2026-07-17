@@ -15,6 +15,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as BookTransportRouteImport } from './routes/book-transport'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VerifyFacilityFacilityIdRouteImport } from './routes/verify-facility.$facilityId'
 import { Route as BookFacilityIdRouteImport } from './routes/book.$facilityId'
 
 const VerifyDriverRoute = VerifyDriverRouteImport.update({
@@ -47,6 +48,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifyFacilityFacilityIdRoute =
+  VerifyFacilityFacilityIdRouteImport.update({
+    id: '/verify-facility/$facilityId',
+    path: '/verify-facility/$facilityId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BookFacilityIdRoute = BookFacilityIdRouteImport.update({
   id: '/book/$facilityId',
   path: '/book/$facilityId',
@@ -61,6 +68,7 @@ export interface FileRoutesByFullPath {
   '/find-storage': typeof FindStorageRoute
   '/verify-driver': typeof VerifyDriverRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
+  '/verify-facility/$facilityId': typeof VerifyFacilityFacilityIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +78,7 @@ export interface FileRoutesByTo {
   '/find-storage': typeof FindStorageRoute
   '/verify-driver': typeof VerifyDriverRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
+  '/verify-facility/$facilityId': typeof VerifyFacilityFacilityIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +89,7 @@ export interface FileRoutesById {
   '/find-storage': typeof FindStorageRoute
   '/verify-driver': typeof VerifyDriverRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
+  '/verify-facility/$facilityId': typeof VerifyFacilityFacilityIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +101,7 @@ export interface FileRouteTypes {
     | '/find-storage'
     | '/verify-driver'
     | '/book/$facilityId'
+    | '/verify-facility/$facilityId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +111,7 @@ export interface FileRouteTypes {
     | '/find-storage'
     | '/verify-driver'
     | '/book/$facilityId'
+    | '/verify-facility/$facilityId'
   id:
     | '__root__'
     | '/'
@@ -109,6 +121,7 @@ export interface FileRouteTypes {
     | '/find-storage'
     | '/verify-driver'
     | '/book/$facilityId'
+    | '/verify-facility/$facilityId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +132,7 @@ export interface RootRouteChildren {
   FindStorageRoute: typeof FindStorageRoute
   VerifyDriverRoute: typeof VerifyDriverRoute
   BookFacilityIdRoute: typeof BookFacilityIdRoute
+  VerifyFacilityFacilityIdRoute: typeof VerifyFacilityFacilityIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -165,6 +179,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verify-facility/$facilityId': {
+      id: '/verify-facility/$facilityId'
+      path: '/verify-facility/$facilityId'
+      fullPath: '/verify-facility/$facilityId'
+      preLoaderRoute: typeof VerifyFacilityFacilityIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/book/$facilityId': {
       id: '/book/$facilityId'
       path: '/book/$facilityId'
@@ -183,6 +204,7 @@ const rootRouteChildren: RootRouteChildren = {
   FindStorageRoute: FindStorageRoute,
   VerifyDriverRoute: VerifyDriverRoute,
   BookFacilityIdRoute: BookFacilityIdRoute,
+  VerifyFacilityFacilityIdRoute: VerifyFacilityFacilityIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
