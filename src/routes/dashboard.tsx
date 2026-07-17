@@ -596,7 +596,23 @@ function FacilityOwnerDash({ ownerId }: { ownerId: string }) {
                   <Stat label="Price/crate/day" value={`₦${f.price_per_crate_per_day}`} />
                   <Stat label="Power" value={f.power_source} />
                 </dl>
+                {f.verification_status !== "verified" && (
+                  <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                    <div>{verificationLabels.gateFacility}</div>
+                    {f.verification_status === "rejected" && f.rejection_reason && (
+                      <div className="mt-1"><b>{verificationLabels.rejectionReason}:</b> {f.rejection_reason}</div>
+                    )}
+                    <Link
+                      to="/verify-facility/$facilityId"
+                      params={{ facilityId: f.id }}
+                      className="mt-2 inline-block rounded-md bg-brand px-2.5 py-1 text-xs font-semibold text-brand-foreground hover:opacity-90"
+                    >
+                      {verificationLabels.goVerify}
+                    </Link>
+                  </div>
+                )}
               </li>
+
             ))}
           </ul>
         )}
