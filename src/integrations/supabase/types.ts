@@ -119,6 +119,7 @@ export type Database = {
           phone_number: string | null
           rating_avg: number
           region: string | null
+          rejection_reason: string | null
           role: Database["public"]["Enums"]["user_role"]
           verification_status: Database["public"]["Enums"]["verification_status"]
         }
@@ -129,6 +130,7 @@ export type Database = {
           phone_number?: string | null
           rating_avg?: number
           region?: string | null
+          rejection_reason?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           verification_status?: Database["public"]["Enums"]["verification_status"]
         }
@@ -139,6 +141,7 @@ export type Database = {
           phone_number?: string | null
           rating_avg?: number
           region?: string | null
+          rejection_reason?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           verification_status?: Database["public"]["Enums"]["verification_status"]
         }
@@ -154,6 +157,7 @@ export type Database = {
           owner_id: string
           power_source: Database["public"]["Enums"]["power_source"]
           price_per_crate_per_day: number
+          rejection_reason: string | null
           status: Database["public"]["Enums"]["facility_status"]
           total_capacity_crates: number
           updated_at: string
@@ -168,6 +172,7 @@ export type Database = {
           owner_id: string
           power_source?: Database["public"]["Enums"]["power_source"]
           price_per_crate_per_day: number
+          rejection_reason?: string | null
           status?: Database["public"]["Enums"]["facility_status"]
           total_capacity_crates: number
           updated_at?: string
@@ -182,6 +187,7 @@ export type Database = {
           owner_id?: string
           power_source?: Database["public"]["Enums"]["power_source"]
           price_per_crate_per_day?: number
+          rejection_reason?: string | null
           status?: Database["public"]["Enums"]["facility_status"]
           total_capacity_crates?: number
           updated_at?: string
@@ -241,12 +247,54 @@ export type Database = {
           },
         ]
       }
+      verification_documents: {
+        Row: {
+          document_type: Database["public"]["Enums"]["document_type"]
+          facility_id: string | null
+          file_url: string
+          id: string
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          document_type: Database["public"]["Enums"]["document_type"]
+          facility_id?: string | null
+          file_url: string
+          id?: string
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          document_type?: Database["public"]["Enums"]["document_type"]
+          facility_id?: string | null
+          file_url?: string
+          id?: string
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_documents_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "storage_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: { _uid: string }; Returns: boolean }
     }
     Enums: {
       booking_status:
@@ -257,6 +305,11 @@ export type Database = {
         | "cancelled"
         | "disputed"
       booking_type: "storage" | "transport"
+      document_type:
+        | "drivers_license"
+        | "vehicle_particulars"
+        | "facility_photo"
+        | "address_proof"
       facility_status: "active" | "paused"
       facility_verification_status: "pending" | "verified" | "rejected"
       match_method: "self_selected" | "admin_assisted"
@@ -401,6 +454,12 @@ export const Constants = {
         "disputed",
       ],
       booking_type: ["storage", "transport"],
+      document_type: [
+        "drivers_license",
+        "vehicle_particulars",
+        "facility_photo",
+        "address_proof",
+      ],
       facility_status: ["active", "paused"],
       facility_verification_status: ["pending", "verified", "rejected"],
       match_method: ["self_selected", "admin_assisted"],
