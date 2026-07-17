@@ -125,3 +125,59 @@ export const bookingStatusStyles: Record<
   cancelled: { label: "Cancelled", className: "bg-gray-100 text-gray-700 border-gray-200" },
   disputed: { label: "Disputed", className: "bg-red-100 text-red-800 border-red-200" },
 };
+
+// Verification / admin
+export const driverDocs = [
+  { key: "drivers_license", label: "Driver's license", accept: "image/*,application/pdf" },
+  { key: "vehicle_particulars", label: "Vehicle particulars", accept: "image/*,application/pdf" },
+] as const;
+
+export const facilityDocs = [
+  { key: "facility_photo", label: "Facility photo", accept: "image/*" },
+  { key: "address_proof", label: "Proof of address", accept: "image/*,application/pdf" },
+] as const;
+
+export const verificationLabels = {
+  driverTitle: "Verify your driver account",
+  driverSubtitle: "Upload the documents below so our team can approve you. Approval usually takes 1–2 business days.",
+  facilityTitle: "Verify this facility",
+  facilitySubtitle: "Upload the documents below so our team can list your facility to farmers.",
+  submit: "Submit for review",
+  resubmit: "Re-submit documents",
+  pendingBanner: "Your documents are under review. We'll notify you once approved.",
+  verifiedBanner: "Verified. You're all set.",
+  rejectedBanner: "Your submission was rejected. Please review the reason below and re-upload.",
+  gateDriverJobs: "Verify your driver account to start receiving jobs.",
+  gateFacility: "This facility must be verified before farmers can book it.",
+  goVerify: "Complete verification",
+  uploadedOn: "Uploaded",
+  currentStatus: "Current status",
+  rejectionReason: "Rejection reason",
+} as const;
+
+export const adminLabels = {
+  title: "Admin console",
+  tabs: { queue: "Verification queue", bookings: "Live bookings" },
+  queuePendingDrivers: "Pending drivers",
+  queuePendingFacilities: "Pending facilities",
+  approve: "Approve",
+  reject: "Reject",
+  rejectPromptTitle: "Reject with reason",
+  rejectPromptPlaceholder: "Tell them what's missing or unclear…",
+  confirmReject: "Confirm rejection",
+  cancel: "Cancel",
+  submittedOn: "Submitted",
+  viewDoc: "View",
+  emptyDrivers: "No driver applications waiting.",
+  emptyFacilities: "No facility applications waiting.",
+  liveBookingsTitle: "All bookings",
+  filterStatus: "Status",
+  allStatuses: "All",
+} as const;
+
+export type DocumentType =
+  | "drivers_license"
+  | "vehicle_particulars"
+  | "facility_photo"
+  | "address_proof";
+

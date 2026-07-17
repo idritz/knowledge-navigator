@@ -9,13 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyDriverRouteImport } from './routes/verify-driver'
 import { Route as FindStorageRouteImport } from './routes/find-storage'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as BookTransportRouteImport } from './routes/book-transport'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VerifyFacilityFacilityIdRouteImport } from './routes/verify-facility.$facilityId'
 import { Route as BookFacilityIdRouteImport } from './routes/book.$facilityId'
 
+const VerifyDriverRoute = VerifyDriverRouteImport.update({
+  id: '/verify-driver',
+  path: '/verify-driver',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FindStorageRoute = FindStorageRouteImport.update({
   id: '/find-storage',
   path: '/find-storage',
@@ -36,11 +44,22 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifyFacilityFacilityIdRoute =
+  VerifyFacilityFacilityIdRouteImport.update({
+    id: '/verify-facility/$facilityId',
+    path: '/verify-facility/$facilityId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BookFacilityIdRoute = BookFacilityIdRouteImport.update({
   id: '/book/$facilityId',
   path: '/book/$facilityId',
@@ -49,67 +68,95 @@ const BookFacilityIdRoute = BookFacilityIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/book-transport': typeof BookTransportRoute
   '/dashboard': typeof DashboardRoute
   '/find-storage': typeof FindStorageRoute
+  '/verify-driver': typeof VerifyDriverRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
+  '/verify-facility/$facilityId': typeof VerifyFacilityFacilityIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/book-transport': typeof BookTransportRoute
   '/dashboard': typeof DashboardRoute
   '/find-storage': typeof FindStorageRoute
+  '/verify-driver': typeof VerifyDriverRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
+  '/verify-facility/$facilityId': typeof VerifyFacilityFacilityIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/book-transport': typeof BookTransportRoute
   '/dashboard': typeof DashboardRoute
   '/find-storage': typeof FindStorageRoute
+  '/verify-driver': typeof VerifyDriverRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
+  '/verify-facility/$facilityId': typeof VerifyFacilityFacilityIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/auth'
     | '/book-transport'
     | '/dashboard'
     | '/find-storage'
+    | '/verify-driver'
     | '/book/$facilityId'
+    | '/verify-facility/$facilityId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/auth'
     | '/book-transport'
     | '/dashboard'
     | '/find-storage'
+    | '/verify-driver'
     | '/book/$facilityId'
+    | '/verify-facility/$facilityId'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/auth'
     | '/book-transport'
     | '/dashboard'
     | '/find-storage'
+    | '/verify-driver'
     | '/book/$facilityId'
+    | '/verify-facility/$facilityId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   BookTransportRoute: typeof BookTransportRoute
   DashboardRoute: typeof DashboardRoute
   FindStorageRoute: typeof FindStorageRoute
+  VerifyDriverRoute: typeof VerifyDriverRoute
   BookFacilityIdRoute: typeof BookFacilityIdRoute
+  VerifyFacilityFacilityIdRoute: typeof VerifyFacilityFacilityIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-driver': {
+      id: '/verify-driver'
+      path: '/verify-driver'
+      fullPath: '/verify-driver'
+      preLoaderRoute: typeof VerifyDriverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/find-storage': {
       id: '/find-storage'
       path: '/find-storage'
@@ -138,11 +185,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify-facility/$facilityId': {
+      id: '/verify-facility/$facilityId'
+      path: '/verify-facility/$facilityId'
+      fullPath: '/verify-facility/$facilityId'
+      preLoaderRoute: typeof VerifyFacilityFacilityIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/book/$facilityId': {
@@ -157,11 +218,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   BookTransportRoute: BookTransportRoute,
   DashboardRoute: DashboardRoute,
   FindStorageRoute: FindStorageRoute,
+  VerifyDriverRoute: VerifyDriverRoute,
   BookFacilityIdRoute: BookFacilityIdRoute,
+  VerifyFacilityFacilityIdRoute: VerifyFacilityFacilityIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

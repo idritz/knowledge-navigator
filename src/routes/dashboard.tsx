@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { bookingLabels, bookingStatusStyles, powerSources, transportLabels, vehicleTypes, type VehicleType } from "@/config";
+import { bookingLabels, bookingStatusStyles, powerSources, transportLabels, verificationLabels, vehicleTypes, type VehicleType } from "@/config";
 import type { Database } from "@/integrations/supabase/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -69,10 +69,16 @@ function Dashboard() {
         </div>
 
         {profile.role === "farmer" && <FarmerDash farmerId={profile.id} />}
-        {profile.role === "driver" && <DriverDash driverId={profile.id} />}
+        {profile.role === "driver" && <DriverDash driverId={profile.id} verified={profile.verification_status === "verified"} />}
         {profile.role === "facility_owner" && <FacilityOwnerDash ownerId={profile.id} />}
         {profile.role === "admin" && (
-          <EmptyCard title="Admin console" body="The internal admin dashboard will land in a later build." />
+          <div className="rounded-xl border border-border bg-card p-6">
+            <h2 className="text-lg font-semibold">Admin console</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Review verification submissions and monitor live bookings.</p>
+            <Link to="/admin" className="mt-3 inline-block rounded-md bg-brand px-3 py-1.5 text-sm font-semibold text-brand-foreground hover:opacity-90">
+              Open admin dashboard
+            </Link>
+          </div>
         )}
       </main>
       <SiteFooter />
@@ -224,7 +230,7 @@ function FarmerDash({ farmerId }: { farmerId: string }) {
 
 type BookingWithFarmer = Booking & { farmer?: Pick<Profile, "id" | "full_name" | "phone_number"> | null };
 
-function DriverDash({ driverId }: { driverId: string }) {
+function DriverDash({ driverId, verified }: { driverId: string; verified: boolean }) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [pending, setPending] = useState<BookingWithFarmer[]>([]);
   const [active, setActive] = useState<BookingWithFarmer[]>([]);
@@ -382,6 +388,17 @@ function DriverDash({ driverId }: { driverId: string }) {
       {/* Jobs */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">{transportLabels.myJobs}</h2>
+        {!verified ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+            <h3 className="font-semibold text-amber-900">{verificationLabels.gateDriverJobs}</h3>
+            <p className="mt-1 text-sm text-amber-900/80">Once approved, your jobs and matching results appear here.</p>
+            <Link to="/verify-driver" className="mt-3 inline-block rounded-md bg-brand px-3 py-1.5 text-sm font-semibold text-brand-foreground hover:opacity-90">
+              {verificationLabels.goVerify}
+            </Link>
+          </div>
+        ) : (
+        <>
+
         {err && <ErrBox>{err}</ErrBox>}
         <h3 className="text-base font-semibold">{transportLabels.incomingJobs}</h3>
         {loading ? (
@@ -445,7 +462,10 @@ function DriverDash({ driverId }: { driverId: string }) {
             ))}
           </ul>
         )}
+        </>
+        )}
       </div>
+
     </section>
   );
 }
@@ -576,7 +596,23 @@ function FacilityOwnerDash({ ownerId }: { ownerId: string }) {
                   <Stat label="Price/crate/day" value={`₦${f.price_per_crate_per_day}`} />
                   <Stat label="Power" value={f.power_source} />
                 </dl>
+                {f.verification_status !== "verified" && (
+                  <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                    <div>{verificationLabels.gateFacility}</div>
+                    {f.verification_status === "rejected" && f.rejection_reason && (
+                      <div className="mt-1"><b>{verificationLabels.rejectionReason}:</b> {f.rejection_reason}</div>
+                    )}
+                    <Link
+                      to="/verify-facility/$facilityId"
+                      params={{ facilityId: f.id }}
+                      className="mt-2 inline-block rounded-md bg-brand px-2.5 py-1 text-xs font-semibold text-brand-foreground hover:opacity-90"
+                    >
+                      {verificationLabels.goVerify}
+                    </Link>
+                  </div>
+                )}
               </li>
+
             ))}
           </ul>
         )}
