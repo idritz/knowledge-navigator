@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyDriverRouteImport } from './routes/verify-driver'
 import { Route as FindStorageRouteImport } from './routes/find-storage'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as BookTransportRouteImport } from './routes/book-transport'
@@ -16,6 +17,11 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BookFacilityIdRouteImport } from './routes/book.$facilityId'
 
+const VerifyDriverRoute = VerifyDriverRouteImport.update({
+  id: '/verify-driver',
+  path: '/verify-driver',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FindStorageRoute = FindStorageRouteImport.update({
   id: '/find-storage',
   path: '/find-storage',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/book-transport': typeof BookTransportRoute
   '/dashboard': typeof DashboardRoute
   '/find-storage': typeof FindStorageRoute
+  '/verify-driver': typeof VerifyDriverRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/book-transport': typeof BookTransportRoute
   '/dashboard': typeof DashboardRoute
   '/find-storage': typeof FindStorageRoute
+  '/verify-driver': typeof VerifyDriverRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/book-transport': typeof BookTransportRoute
   '/dashboard': typeof DashboardRoute
   '/find-storage': typeof FindStorageRoute
+  '/verify-driver': typeof VerifyDriverRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +89,7 @@ export interface FileRouteTypes {
     | '/book-transport'
     | '/dashboard'
     | '/find-storage'
+    | '/verify-driver'
     | '/book/$facilityId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -88,6 +98,7 @@ export interface FileRouteTypes {
     | '/book-transport'
     | '/dashboard'
     | '/find-storage'
+    | '/verify-driver'
     | '/book/$facilityId'
   id:
     | '__root__'
@@ -96,6 +107,7 @@ export interface FileRouteTypes {
     | '/book-transport'
     | '/dashboard'
     | '/find-storage'
+    | '/verify-driver'
     | '/book/$facilityId'
   fileRoutesById: FileRoutesById
 }
@@ -105,11 +117,19 @@ export interface RootRouteChildren {
   BookTransportRoute: typeof BookTransportRoute
   DashboardRoute: typeof DashboardRoute
   FindStorageRoute: typeof FindStorageRoute
+  VerifyDriverRoute: typeof VerifyDriverRoute
   BookFacilityIdRoute: typeof BookFacilityIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-driver': {
+      id: '/verify-driver'
+      path: '/verify-driver'
+      fullPath: '/verify-driver'
+      preLoaderRoute: typeof VerifyDriverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/find-storage': {
       id: '/find-storage'
       path: '/find-storage'
@@ -161,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   BookTransportRoute: BookTransportRoute,
   DashboardRoute: DashboardRoute,
   FindStorageRoute: FindStorageRoute,
+  VerifyDriverRoute: VerifyDriverRoute,
   BookFacilityIdRoute: BookFacilityIdRoute,
 }
 export const routeTree = rootRouteImport
