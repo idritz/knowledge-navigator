@@ -388,6 +388,17 @@ function DriverDash({ driverId, verified }: { driverId: string; verified: boolea
       {/* Jobs */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">{transportLabels.myJobs}</h2>
+        {!verified ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+            <h3 className="font-semibold text-amber-900">{verificationLabels.gateDriverJobs}</h3>
+            <p className="mt-1 text-sm text-amber-900/80">Once approved, your jobs and matching results appear here.</p>
+            <Link to="/verify-driver" className="mt-3 inline-block rounded-md bg-brand px-3 py-1.5 text-sm font-semibold text-brand-foreground hover:opacity-90">
+              {verificationLabels.goVerify}
+            </Link>
+          </div>
+        ) : (
+        <>
+
         {err && <ErrBox>{err}</ErrBox>}
         <h3 className="text-base font-semibold">{transportLabels.incomingJobs}</h3>
         {loading ? (
