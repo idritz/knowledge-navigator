@@ -462,7 +462,10 @@ function DriverDash({ driverId, verified }: { driverId: string; verified: boolea
             ))}
           </ul>
         )}
+        </>
+        )}
       </div>
+
     </section>
   );
 }
