@@ -230,7 +230,7 @@ function FarmerDash({ farmerId }: { farmerId: string }) {
 
 type BookingWithFarmer = Booking & { farmer?: Pick<Profile, "id" | "full_name" | "phone_number"> | null };
 
-function DriverDash({ driverId }: { driverId: string }) {
+function DriverDash({ driverId, verified }: { driverId: string; verified: boolean }) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [pending, setPending] = useState<BookingWithFarmer[]>([]);
   const [active, setActive] = useState<BookingWithFarmer[]>([]);
