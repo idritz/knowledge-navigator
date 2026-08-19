@@ -243,6 +243,11 @@ export const adminLabels = {
   liveBookingsTitle: "All bookings",
   filterStatus: "Status",
   allStatuses: "All",
+  transactionsTitle: "All transactions",
+  markPaidOut: "Mark as Paid Out",
+  paidOut: "Paid out",
+  recipient: "Recipient",
+  emptyTransactions: "No transactions yet.",
 } as const;
 
 export type DocumentType =
