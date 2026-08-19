@@ -28,6 +28,7 @@ export type Database = {
           farmer_id: string
           id: string
           match_method: Database["public"]["Enums"]["match_method"] | null
+          payment_status: string
           pickup_date: string | null
           pickup_region: string | null
           price_quoted: number
@@ -52,6 +53,7 @@ export type Database = {
           farmer_id: string
           id?: string
           match_method?: Database["public"]["Enums"]["match_method"] | null
+          payment_status?: string
           pickup_date?: string | null
           pickup_region?: string | null
           price_quoted?: number
@@ -76,6 +78,7 @@ export type Database = {
           farmer_id?: string
           id?: string
           match_method?: Database["public"]["Enums"]["match_method"] | null
+          payment_status?: string
           pickup_date?: string | null
           pickup_region?: string | null
           price_quoted?: number
@@ -203,6 +206,59 @@ export type Database = {
           },
         ]
       }
+      transactions: {
+        Row: {
+          amount: number
+          booking_id: string
+          created_at: string
+          gateway: string
+          gateway_reference: string
+          id: string
+          paid_out_at: string | null
+          payout_amount: number
+          payout_status: string
+          platform_fee: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          created_at?: string
+          gateway?: string
+          gateway_reference: string
+          id?: string
+          paid_out_at?: string | null
+          payout_amount: number
+          payout_status?: string
+          platform_fee: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          created_at?: string
+          gateway?: string
+          gateway_reference?: string
+          id?: string
+          paid_out_at?: string | null
+          payout_amount?: number
+          payout_status?: string
+          platform_fee?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicles: {
         Row: {
           availability_status: Database["public"]["Enums"]["vehicle_availability"]
@@ -294,7 +350,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      expire_ecocold_bookings: { Args: never; Returns: number }
       is_admin: { Args: { _uid: string }; Returns: boolean }
+      process_payment_webhook: {
+        Args: {
+          p_amount_ngn: number
+          p_booking_id: string
+          p_gateway_reference: string
+          p_platform_fee_pct: number
+        }
+        Returns: Json
+      }
+      process_refund_webhook: {
+        Args: { p_gateway_reference: string; p_refund_status: string }
+        Returns: Json
+      }
     }
     Enums: {
       booking_status:
