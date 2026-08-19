@@ -155,9 +155,79 @@ export const verificationLabels = {
   rejectionReason: "Rejection reason",
 } as const;
 
+// ---------- Payments & escrow ----------
+
+export const payments = {
+  currency: "NGN",
+  currencySymbol: "₦",
+  gateway: "paystack",
+  platform_fee_percentage: 10,
+  // Placeholder flat transport rates (NGN) until distance-based pricing lands.
+  transportFlatRates: {
+    motorcycle: 5000,
+    tricycle: 8000,
+    car: 10000,
+    van: 15000,
+    truck: 30000,
+  } as Record<string, number>,
+} as const;
+
+export function transportPrice(vehicleType: string): number {
+  return payments.transportFlatRates[vehicleType] ?? payments.transportFlatRates["van"]!;
+}
+
+export function platformFee(amount: number): number {
+  return Math.round(amount * payments.platform_fee_percentage) / 100;
+}
+
+export const paymentLabels = {
+  payNow: "Pay now",
+  paying: "Opening checkout…",
+  checkoutTitle: "Payment",
+  cancelBooking: "Cancel & refund",
+  cancelling: "Cancelling…",
+  escrowNote:
+    "Your payment is held securely by EcoCold and only released to the provider after the booking is completed.",
+  cancellationPolicyNote:
+    "Cancelling before completion currently triggers a full refund. A final cancellation fee policy is not yet defined.",
+  refundAsyncNote: "Refunds are processed by Paystack and can take a few days to reach your account.",
+  successTitle: "Payment received",
+  successBody: "Your payment is held in escrow. The provider still has to confirm your booking.",
+  pendingTitle: "Payment processing",
+  pendingBody: "We're confirming your payment with Paystack. This page will update shortly.",
+  failedTitle: "Payment not completed",
+  failedBody: "We couldn't confirm this payment. You can retry from your dashboard.",
+  backToDashboard: "Back to dashboard",
+} as const;
+
+export const paymentStatusStyles: Record<
+  string,
+  { label: string; className: string }
+> = {
+  unpaid: { label: "Unpaid", className: "bg-gray-100 text-gray-700 border-gray-200" },
+  paid: { label: "Paid · in escrow", className: "bg-green-100 text-green-800 border-green-200" },
+  refund_pending: { label: "Refund pending", className: "bg-amber-100 text-amber-800 border-amber-200" },
+  refunded: { label: "Refunded", className: "bg-blue-100 text-blue-800 border-blue-200" },
+  failed: { label: "Payment failed", className: "bg-red-100 text-red-800 border-red-200" },
+};
+
+export const transactionStatusStyles: Record<string, { label: string; className: string }> = {
+  pending: { label: "Pending", className: "bg-gray-100 text-gray-700 border-gray-200" },
+  held: { label: "Held in escrow", className: "bg-amber-100 text-amber-800 border-amber-200" },
+  released: { label: "Released", className: "bg-green-100 text-green-800 border-green-200" },
+  refund_pending: { label: "Refund pending", className: "bg-amber-100 text-amber-800 border-amber-200" },
+  refunded: { label: "Refunded", className: "bg-blue-100 text-blue-800 border-blue-200" },
+  refund_failed: { label: "Refund failed", className: "bg-red-100 text-red-800 border-red-200" },
+  failed: { label: "Failed", className: "bg-red-100 text-red-800 border-red-200" },
+};
+
 export const adminLabels = {
   title: "Admin console",
-  tabs: { queue: "Verification queue", bookings: "Live bookings" },
+  tabs: {
+    queue: "Verification queue",
+    bookings: "Live bookings",
+    transactions: "Transactions",
+  },
   queuePendingDrivers: "Pending drivers",
   queuePendingFacilities: "Pending facilities",
   approve: "Approve",
@@ -173,6 +243,11 @@ export const adminLabels = {
   liveBookingsTitle: "All bookings",
   filterStatus: "Status",
   allStatuses: "All",
+  transactionsTitle: "All transactions",
+  markPaidOut: "Mark as Paid Out",
+  paidOut: "Paid out",
+  recipient: "Recipient",
+  emptyTransactions: "No transactions yet.",
 } as const;
 
 export type DocumentType =
