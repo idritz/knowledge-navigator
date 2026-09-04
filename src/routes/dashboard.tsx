@@ -306,14 +306,17 @@ function DriverDash({ driverId, verified }: { driverId: string; verified: boolea
   const [homeRegion, setHomeRegion] = useState("");
   const [capacityKg, setCapacityKg] = useState<number>(500);
 
+  const refund = useServerFn(requestBookingRefund);
+
   const load = useCallback(async () => {
     setLoading(true);
-    // Auto-expire pending assigned to this driver
+    // Auto-expire unpaid pending requests assigned to this driver
     await supabase
       .from("bookings")
       .update({ status: "cancelled" })
       .eq("driver_id", driverId)
       .eq("status", "pending")
+      .eq("payment_status", "unpaid")
       .lt("confirm_deadline", new Date().toISOString());
 
     const [{ data: veh }, { data: bks }] = await Promise.all([
@@ -327,8 +330,10 @@ function DriverDash({ driverId, verified }: { driverId: string; verified: boolea
     ]);
     setVehicles(veh ?? []);
     const list = (bks as BookingWithFarmer[]) ?? [];
-    setPending(list.filter((b) => b.status === "pending"));
+    // Drivers only see requests the farmer has already paid for.
+    setPending(list.filter((b) => b.status === "pending" && b.payment_status === "paid"));
     setActive(list.filter((b) => b.status === "confirmed" || b.status === "in_progress"));
+
     setLoading(false);
   }, [driverId]);
 
