@@ -239,22 +239,47 @@ function FarmerDash({ farmerId }: { farmerId: string }) {
                     </>
                   )}
                 </div>
-                <StatusBadge status={b.status} />
+                <div className="flex flex-col items-end gap-1">
+                  <StatusBadge status={b.status} />
+                  <PaymentBadge status={b.payment_status} />
+                </div>
               </div>
               <div className="mt-3 flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Price</span>
                 <span className="font-medium">₦{Number(b.price_quoted).toLocaleString()}</span>
               </div>
-              {canMarkComplete(b) && (
-                <div className="mt-3">
+              {b.payment_status === "refund_pending" && (
+                <p className="mt-2 text-xs text-muted-foreground">{paymentLabels.refundAsyncNote}</p>
+              )}
+              <div className="mt-3 flex flex-wrap gap-2">
+                {b.status === "pending" && b.payment_status === "unpaid" && Number(b.price_quoted) > 0 && (
+                  <button
+                    disabled={busyId === b.id}
+                    onClick={() => payNow(b)}
+                    className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-brand-foreground hover:opacity-90 disabled:opacity-60"
+                  >
+                    {busyId === b.id ? paymentLabels.paying : paymentLabels.payNow}
+                  </button>
+                )}
+                {(b.status === "pending" || b.status === "confirmed") && (
+                  <button
+                    disabled={busyId === b.id}
+                    onClick={() => cancelBooking(b)}
+                    className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent disabled:opacity-60"
+                  >
+                    {busyId === b.id ? paymentLabels.cancelling : paymentLabels.cancelBooking}
+                  </button>
+                )}
+                {canMarkComplete(b) && (
                   <button
                     onClick={() => markCompleted(b)}
                     className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent"
                   >
                     {bookingLabels.markCompleted}
                   </button>
-                </div>
-              )}
+                )}
+              </div>
+
             </li>
           ))}
         </ul>
