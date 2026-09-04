@@ -112,14 +112,19 @@ function FarmerDash({ farmerId }: { farmerId: string }) {
   const [bookings, setBookings] = useState<BookingWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const startPayment = useServerFn(initializeBookingPayment);
+  const refund = useServerFn(requestBookingRefund);
 
   const load = useCallback(async () => {
     setLoading(true);
+    // Unpaid expired requests simply lapse; paid ones are handled server-side (refund flow).
     await supabase
       .from("bookings")
       .update({ status: "cancelled" })
       .eq("farmer_id", farmerId)
       .eq("status", "pending")
+      .eq("payment_status", "unpaid")
       .lt("confirm_deadline", new Date().toISOString());
 
     const { data, error } = await supabase
@@ -148,6 +153,35 @@ function FarmerDash({ farmerId }: { farmerId: string }) {
     }
     await load();
   }
+
+  async function payNow(b: BookingWithRelations) {
+    setErr(null);
+    setBusyId(b.id);
+    try {
+      const res = await startPayment({ data: { bookingId: b.id, origin: window.location.origin } });
+      window.location.href = res.authorizationUrl;
+    } catch (e) {
+      setBusyId(null);
+      setErr(e instanceof Error ? e.message : "Could not start checkout.");
+    }
+  }
+
+  async function cancelBooking(b: BookingWithRelations) {
+    setErr(null);
+    setBusyId(b.id);
+    const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", b.id);
+    if (error) { setBusyId(null); setErr(error.message); return; }
+    if (b.payment_status === "paid") {
+      try {
+        await refund({ data: { bookingId: b.id } });
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : "Refund could not be started.");
+      }
+    }
+    setBusyId(null);
+    await load();
+  }
+
 
   return (
     <section className="space-y-4">
