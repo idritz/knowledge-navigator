@@ -1,9 +1,12 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { bookingLabels, bookingStatusStyles, powerSources, transportLabels, verificationLabels, vehicleTypes, type VehicleType } from "@/config";
+import { bookingLabels, bookingStatusStyles, powerSources, transportLabels, verificationLabels, vehicleTypes, paymentLabels, paymentStatusStyles, type VehicleType } from "@/config";
+import { initializeBookingPayment, requestBookingRefund } from "@/lib/payments.functions";
 import type { Database } from "@/integrations/supabase/types";
+
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Facility = Database["public"]["Tables"]["storage_facilities"]["Row"];
