@@ -18,6 +18,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VerifyFacilityFacilityIdRouteImport } from './routes/verify-facility.$facilityId'
 import { Route as BookFacilityIdRouteImport } from './routes/book.$facilityId'
+import { Route as ApiPublicWebhooksPaystackRouteImport } from './routes/api/public/webhooks/paystack'
 
 const VerifyDriverRoute = VerifyDriverRouteImport.update({
   id: '/verify-driver',
@@ -65,6 +66,12 @@ const BookFacilityIdRoute = BookFacilityIdRouteImport.update({
   path: '/book/$facilityId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWebhooksPaystackRoute =
+  ApiPublicWebhooksPaystackRouteImport.update({
+    id: '/api/public/webhooks/paystack',
+    path: '/api/public/webhooks/paystack',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -76,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/verify-driver': typeof VerifyDriverRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
   '/verify-facility/$facilityId': typeof VerifyFacilityFacilityIdRoute
+  '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -87,6 +95,7 @@ export interface FileRoutesByTo {
   '/verify-driver': typeof VerifyDriverRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
   '/verify-facility/$facilityId': typeof VerifyFacilityFacilityIdRoute
+  '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -99,6 +108,7 @@ export interface FileRoutesById {
   '/verify-driver': typeof VerifyDriverRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
   '/verify-facility/$facilityId': typeof VerifyFacilityFacilityIdRoute
+  '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -112,6 +122,7 @@ export interface FileRouteTypes {
     | '/verify-driver'
     | '/book/$facilityId'
     | '/verify-facility/$facilityId'
+    | '/api/public/webhooks/paystack'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
     | '/verify-driver'
     | '/book/$facilityId'
     | '/verify-facility/$facilityId'
+    | '/api/public/webhooks/paystack'
   id:
     | '__root__'
     | '/'
@@ -134,6 +146,7 @@ export interface FileRouteTypes {
     | '/verify-driver'
     | '/book/$facilityId'
     | '/verify-facility/$facilityId'
+    | '/api/public/webhooks/paystack'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -146,6 +159,7 @@ export interface RootRouteChildren {
   VerifyDriverRoute: typeof VerifyDriverRoute
   BookFacilityIdRoute: typeof BookFacilityIdRoute
   VerifyFacilityFacilityIdRoute: typeof VerifyFacilityFacilityIdRoute
+  ApiPublicWebhooksPaystackRoute: typeof ApiPublicWebhooksPaystackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -213,6 +227,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookFacilityIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/webhooks/paystack': {
+      id: '/api/public/webhooks/paystack'
+      path: '/api/public/webhooks/paystack'
+      fullPath: '/api/public/webhooks/paystack'
+      preLoaderRoute: typeof ApiPublicWebhooksPaystackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -226,6 +247,7 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyDriverRoute: VerifyDriverRoute,
   BookFacilityIdRoute: BookFacilityIdRoute,
   VerifyFacilityFacilityIdRoute: VerifyFacilityFacilityIdRoute,
+  ApiPublicWebhooksPaystackRoute: ApiPublicWebhooksPaystackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
