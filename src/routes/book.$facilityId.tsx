@@ -1,9 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { bookingLabels, cropTypes, type CropType } from "@/config";
+import { bookingLabels, cropTypes, paymentLabels, type CropType } from "@/config";
+import { initializeBookingPayment } from "@/lib/payments.functions";
 import type { Database } from "@/integrations/supabase/types";
+
 
 type Facility = Database["public"]["Tables"]["storage_facilities"]["Row"];
 
