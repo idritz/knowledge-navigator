@@ -214,6 +214,14 @@ function BookTransport() {
             <button onClick={() => setStage("form")} className="text-xs text-muted-foreground hover:text-foreground">
               ← Edit request
             </button>
+            <div className="rounded-xl border border-border bg-card p-4 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Trip price ({vehicleLabel(vehicleType)})</span>
+                <span className="text-base font-semibold">₦{transportPrice(vehicleType).toLocaleString()}</span>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">{paymentLabels.escrowNote}</p>
+            </div>
+
             {matches.length === 0 ? (
               <div className="rounded-xl border border-border bg-card p-5">
                 <h2 className="text-base font-semibold">{transportLabels.noMatchesTitle}</h2>
