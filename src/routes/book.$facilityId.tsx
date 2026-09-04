@@ -102,26 +102,43 @@ function BookFacility() {
       Date.now() + bookingLabels.confirmDeadlineHours * 60 * 60 * 1000,
     ).toISOString();
 
-    const { error } = await supabase.from("bookings").insert({
-      type: "storage",
-      farmer_id: userId,
-      facility_id: facility.id,
-      crop_type: crop,
-      volume_crates: volume,
-      duration_days: durationDays,
-      price_quoted: priceQuoted,
-      checkin_date: checkin,
-      checkout_date: checkout,
-      confirm_deadline: deadline,
-      status: "pending",
-    });
-    setBusy(false);
-    if (error) {
-      setErr(error.message);
+    const { data: created, error } = await supabase
+      .from("bookings")
+      .insert({
+        type: "storage",
+        farmer_id: userId,
+        facility_id: facility.id,
+        crop_type: crop,
+        volume_crates: volume,
+        duration_days: durationDays,
+        price_quoted: priceQuoted,
+        checkin_date: checkin,
+        checkout_date: checkout,
+        confirm_deadline: deadline,
+        status: "pending",
+      })
+      .select("id")
+      .single();
+    if (error || !created) {
+      setBusy(false);
+      setErr(error?.message ?? "Could not create booking.");
       return;
     }
-    setDone({ facilityName: fresh.name });
+
+    try {
+      const res = await startPayment({
+        data: { bookingId: created.id, origin: window.location.origin },
+      });
+      window.location.href = res.authorizationUrl;
+    } catch (e) {
+      setBusy(false);
+      setErr(
+        (e instanceof Error ? e.message : "Could not start checkout.") +
+          " Your request was saved — you can pay from your dashboard.",
+      );
+    }
   }
+
 
   if (loading) {
     return (
