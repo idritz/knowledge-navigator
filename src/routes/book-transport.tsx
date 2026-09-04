@@ -82,30 +82,47 @@ function BookTransport() {
   async function createBooking(driverId: string | null) {
     if (!userId) return;
     setSubmitting(true); setErr(null);
-    const { error } = await supabase.from("bookings").insert({
-      type: "transport",
-      farmer_id: userId,
-      driver_id: driverId,
-      crop_type: crop,
-      volume_crates: volume,
-      status: "pending",
-      price_quoted: 0,
-      match_method: driverId ? "self_selected" : "admin_assisted",
-      pickup_region: pickup.trim(),
-      destination_region: destination.trim(),
-      pickup_date: pickupDate,
-      vehicle_type_requested: vehicleType,
-      confirm_deadline: new Date(
-        Date.now() + bookingLabels.confirmDeadlineHours * 60 * 60 * 1000,
-      ).toISOString(),
-    });
-    setSubmitting(false);
-    if (error) { setErr(error.message); return; }
-    setDone({
-      mode: driverId ? "self" : "admin",
-      driverName: matches.find((m) => m.driver?.id === driverId)?.driver?.full_name ?? undefined,
-    });
+    const price = transportPrice(vehicleType);
+    const { data: created, error } = await supabase
+      .from("bookings")
+      .insert({
+        type: "transport",
+        farmer_id: userId,
+        driver_id: driverId,
+        crop_type: crop,
+        volume_crates: volume,
+        status: "pending",
+        price_quoted: price,
+        match_method: driverId ? "self_selected" : "admin_assisted",
+        pickup_region: pickup.trim(),
+        destination_region: destination.trim(),
+        pickup_date: pickupDate,
+        vehicle_type_requested: vehicleType,
+        confirm_deadline: new Date(
+          Date.now() + bookingLabels.confirmDeadlineHours * 60 * 60 * 1000,
+        ).toISOString(),
+      })
+      .select("id")
+      .single();
+    if (error || !created) {
+      setSubmitting(false);
+      setErr(error?.message ?? "Could not create request.");
+      return;
+    }
+    try {
+      const res = await startPayment({
+        data: { bookingId: created.id, origin: window.location.origin },
+      });
+      window.location.href = res.authorizationUrl;
+    } catch (e) {
+      setSubmitting(false);
+      setErr(
+        (e instanceof Error ? e.message : "Could not start checkout.") +
+          " Your request was saved — you can pay from your dashboard.",
+      );
+    }
   }
+
 
   if (checking) {
     return (
