@@ -378,8 +378,16 @@ function DriverDash({ driverId, verified }: { driverId: string; verified: boolea
     setErr(null);
     const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", b.id);
     if (error) { setErr(error.message); return; }
+    if (b.payment_status === "paid") {
+      try {
+        await refund({ data: { bookingId: b.id } });
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : "Refund could not be started.");
+      }
+    }
     await load();
   }
+
 
   async function complete(b: BookingWithFarmer) {
     setErr(null);
