@@ -234,7 +234,7 @@ function BookTransport() {
                   onClick={() => createBooking(null)}
                   className="mt-4 rounded-md bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground hover:opacity-90 disabled:opacity-60"
                 >
-                  {submitting ? "Sending…" : "Send to matching team"}
+                  {submitting ? paymentLabels.paying : "Pay & send to matching team"}
                 </button>
               </div>
             ) : (
@@ -261,7 +261,7 @@ function BookTransport() {
                           onClick={() => createBooking(m.driver!.id)}
                           className="w-full rounded-md bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground hover:opacity-90 disabled:opacity-60"
                         >
-                          {submitting ? "Sending…" : transportLabels.requestDriver}
+                          {submitting ? paymentLabels.paying : paymentLabels.payNow}
                         </button>
                       </div>
                     </li>
