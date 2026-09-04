@@ -851,6 +851,17 @@ function StatusBadge({ status }: { status: BookingStatus }) {
   );
 }
 
+function PaymentBadge({ status }: { status: string }) {
+  const s = paymentStatusStyles[status];
+  if (!s) return null;
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${s.className}`}>
+      {s.label}
+    </span>
+  );
+}
+
+
 function EmptyCard({ title, body }: { title: string; body: string }) {
   return (
     <div className="rounded-xl border border-dashed border-border bg-muted/40 p-8 text-center">
