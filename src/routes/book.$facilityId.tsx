@@ -278,11 +278,13 @@ function BookFacility() {
             </div>
           )}
 
+          <p className="text-xs text-muted-foreground">{paymentLabels.escrowNote}</p>
+
           <button
             disabled={busy || durationDays <= 0}
             className="w-full rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-brand-foreground hover:opacity-90 disabled:opacity-60"
           >
-            {busy ? "Sending…" : bookingLabels.submitBooking}
+            {busy ? paymentLabels.paying : paymentLabels.payNow}
           </button>
         </form>
       </main>
