@@ -1,9 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { bookingLabels, cropTypes, type CropType } from "@/config";
+import { bookingLabels, cropTypes, paymentLabels, type CropType } from "@/config";
+import { initializeBookingPayment } from "@/lib/payments.functions";
 import type { Database } from "@/integrations/supabase/types";
+
 
 type Facility = Database["public"]["Tables"]["storage_facilities"]["Row"];
 
@@ -20,6 +23,7 @@ export const Route = createFileRoute("/book/$facilityId")({
 function BookFacility() {
   const { facilityId } = Route.useParams();
   const navigate = useNavigate();
+  const startPayment = useServerFn(initializeBookingPayment);
   const [facility, setFacility] = useState<Facility | null>(null);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -102,26 +106,43 @@ function BookFacility() {
       Date.now() + bookingLabels.confirmDeadlineHours * 60 * 60 * 1000,
     ).toISOString();
 
-    const { error } = await supabase.from("bookings").insert({
-      type: "storage",
-      farmer_id: userId,
-      facility_id: facility.id,
-      crop_type: crop,
-      volume_crates: volume,
-      duration_days: durationDays,
-      price_quoted: priceQuoted,
-      checkin_date: checkin,
-      checkout_date: checkout,
-      confirm_deadline: deadline,
-      status: "pending",
-    });
-    setBusy(false);
-    if (error) {
-      setErr(error.message);
+    const { data: created, error } = await supabase
+      .from("bookings")
+      .insert({
+        type: "storage",
+        farmer_id: userId,
+        facility_id: facility.id,
+        crop_type: crop,
+        volume_crates: volume,
+        duration_days: durationDays,
+        price_quoted: priceQuoted,
+        checkin_date: checkin,
+        checkout_date: checkout,
+        confirm_deadline: deadline,
+        status: "pending",
+      })
+      .select("id")
+      .single();
+    if (error || !created) {
+      setBusy(false);
+      setErr(error?.message ?? "Could not create booking.");
       return;
     }
-    setDone({ facilityName: fresh.name });
+
+    try {
+      const res = await startPayment({
+        data: { bookingId: created.id, origin: window.location.origin },
+      });
+      window.location.href = res.authorizationUrl;
+    } catch (e) {
+      setBusy(false);
+      setErr(
+        (e instanceof Error ? e.message : "Could not start checkout.") +
+          " Your request was saved — you can pay from your dashboard.",
+      );
+    }
   }
+
 
   if (loading) {
     return (
@@ -257,11 +278,13 @@ function BookFacility() {
             </div>
           )}
 
+          <p className="text-xs text-muted-foreground">{paymentLabels.escrowNote}</p>
+
           <button
             disabled={busy || durationDays <= 0}
             className="w-full rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-brand-foreground hover:opacity-90 disabled:opacity-60"
           >
-            {busy ? "Sending…" : bookingLabels.submitBooking}
+            {busy ? paymentLabels.paying : paymentLabels.payNow}
           </button>
         </form>
       </main>

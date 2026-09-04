@@ -1,9 +1,12 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { bookingLabels, bookingStatusStyles, powerSources, transportLabels, verificationLabels, vehicleTypes, type VehicleType } from "@/config";
+import { bookingLabels, bookingStatusStyles, powerSources, transportLabels, verificationLabels, vehicleTypes, paymentLabels, paymentStatusStyles, type VehicleType } from "@/config";
+import { initializeBookingPayment, requestBookingRefund } from "@/lib/payments.functions";
 import type { Database } from "@/integrations/supabase/types";
+
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Facility = Database["public"]["Tables"]["storage_facilities"]["Row"];
@@ -109,14 +112,19 @@ function FarmerDash({ farmerId }: { farmerId: string }) {
   const [bookings, setBookings] = useState<BookingWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const startPayment = useServerFn(initializeBookingPayment);
+  const refund = useServerFn(requestBookingRefund);
 
   const load = useCallback(async () => {
     setLoading(true);
+    // Unpaid expired requests simply lapse; paid ones are handled server-side (refund flow).
     await supabase
       .from("bookings")
       .update({ status: "cancelled" })
       .eq("farmer_id", farmerId)
       .eq("status", "pending")
+      .eq("payment_status", "unpaid")
       .lt("confirm_deadline", new Date().toISOString());
 
     const { data, error } = await supabase
@@ -145,6 +153,35 @@ function FarmerDash({ farmerId }: { farmerId: string }) {
     }
     await load();
   }
+
+  async function payNow(b: BookingWithRelations) {
+    setErr(null);
+    setBusyId(b.id);
+    try {
+      const res = await startPayment({ data: { bookingId: b.id, origin: window.location.origin } });
+      window.location.href = res.authorizationUrl;
+    } catch (e) {
+      setBusyId(null);
+      setErr(e instanceof Error ? e.message : "Could not start checkout.");
+    }
+  }
+
+  async function cancelBooking(b: BookingWithRelations) {
+    setErr(null);
+    setBusyId(b.id);
+    const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", b.id);
+    if (error) { setBusyId(null); setErr(error.message); return; }
+    if (b.payment_status === "paid") {
+      try {
+        await refund({ data: { bookingId: b.id } });
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : "Refund could not be started.");
+      }
+    }
+    setBusyId(null);
+    await load();
+  }
+
 
   return (
     <section className="space-y-4">
@@ -202,22 +239,47 @@ function FarmerDash({ farmerId }: { farmerId: string }) {
                     </>
                   )}
                 </div>
-                <StatusBadge status={b.status} />
+                <div className="flex flex-col items-end gap-1">
+                  <StatusBadge status={b.status} />
+                  <PaymentBadge status={b.payment_status} />
+                </div>
               </div>
               <div className="mt-3 flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Price</span>
                 <span className="font-medium">₦{Number(b.price_quoted).toLocaleString()}</span>
               </div>
-              {canMarkComplete(b) && (
-                <div className="mt-3">
+              {b.payment_status === "refund_pending" && (
+                <p className="mt-2 text-xs text-muted-foreground">{paymentLabels.refundAsyncNote}</p>
+              )}
+              <div className="mt-3 flex flex-wrap gap-2">
+                {b.status === "pending" && b.payment_status === "unpaid" && Number(b.price_quoted) > 0 && (
+                  <button
+                    disabled={busyId === b.id}
+                    onClick={() => payNow(b)}
+                    className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-brand-foreground hover:opacity-90 disabled:opacity-60"
+                  >
+                    {busyId === b.id ? paymentLabels.paying : paymentLabels.payNow}
+                  </button>
+                )}
+                {(b.status === "pending" || b.status === "confirmed") && (
+                  <button
+                    disabled={busyId === b.id}
+                    onClick={() => cancelBooking(b)}
+                    className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent disabled:opacity-60"
+                  >
+                    {busyId === b.id ? paymentLabels.cancelling : paymentLabels.cancelBooking}
+                  </button>
+                )}
+                {canMarkComplete(b) && (
                   <button
                     onClick={() => markCompleted(b)}
                     className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent"
                   >
                     {bookingLabels.markCompleted}
                   </button>
-                </div>
-              )}
+                )}
+              </div>
+
             </li>
           ))}
         </ul>
@@ -244,14 +306,17 @@ function DriverDash({ driverId, verified }: { driverId: string; verified: boolea
   const [homeRegion, setHomeRegion] = useState("");
   const [capacityKg, setCapacityKg] = useState<number>(500);
 
+  const refund = useServerFn(requestBookingRefund);
+
   const load = useCallback(async () => {
     setLoading(true);
-    // Auto-expire pending assigned to this driver
+    // Auto-expire unpaid pending requests assigned to this driver
     await supabase
       .from("bookings")
       .update({ status: "cancelled" })
       .eq("driver_id", driverId)
       .eq("status", "pending")
+      .eq("payment_status", "unpaid")
       .lt("confirm_deadline", new Date().toISOString());
 
     const [{ data: veh }, { data: bks }] = await Promise.all([
@@ -265,8 +330,10 @@ function DriverDash({ driverId, verified }: { driverId: string; verified: boolea
     ]);
     setVehicles(veh ?? []);
     const list = (bks as BookingWithFarmer[]) ?? [];
-    setPending(list.filter((b) => b.status === "pending"));
+    // Drivers only see requests the farmer has already paid for.
+    setPending(list.filter((b) => b.status === "pending" && b.payment_status === "paid"));
     setActive(list.filter((b) => b.status === "confirmed" || b.status === "in_progress"));
+
     setLoading(false);
   }, [driverId]);
 
@@ -311,8 +378,16 @@ function DriverDash({ driverId, verified }: { driverId: string; verified: boolea
     setErr(null);
     const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", b.id);
     if (error) { setErr(error.message); return; }
+    if (b.payment_status === "paid") {
+      try {
+        await refund({ data: { bookingId: b.id } });
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : "Refund could not be started.");
+      }
+    }
     await load();
   }
+
 
   async function complete(b: BookingWithFarmer) {
     setErr(null);
@@ -788,6 +863,17 @@ function StatusBadge({ status }: { status: BookingStatus }) {
     </span>
   );
 }
+
+function PaymentBadge({ status }: { status: string }) {
+  const s = paymentStatusStyles[status];
+  if (!s) return null;
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${s.className}`}>
+      {s.label}
+    </span>
+  );
+}
+
 
 function EmptyCard({ title, body }: { title: string; body: string }) {
   return (

@@ -1,9 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { transportLabels, vehicleTypes, type VehicleType, bookingLabels, cropTypes, type CropType } from "@/config";
+import { transportLabels, vehicleTypes, type VehicleType, bookingLabels, cropTypes, type CropType, transportPrice, paymentLabels } from "@/config";
+import { initializeBookingPayment } from "@/lib/payments.functions";
 import type { Database } from "@/integrations/supabase/types";
+
 
 type Vehicle = Database["public"]["Tables"]["vehicles"]["Row"];
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -26,6 +29,7 @@ function todayISO() {
 
 function BookTransport() {
   const navigate = useNavigate();
+  const startPayment = useServerFn(initializeBookingPayment);
   const [userId, setUserId] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
 
@@ -82,30 +86,47 @@ function BookTransport() {
   async function createBooking(driverId: string | null) {
     if (!userId) return;
     setSubmitting(true); setErr(null);
-    const { error } = await supabase.from("bookings").insert({
-      type: "transport",
-      farmer_id: userId,
-      driver_id: driverId,
-      crop_type: crop,
-      volume_crates: volume,
-      status: "pending",
-      price_quoted: 0,
-      match_method: driverId ? "self_selected" : "admin_assisted",
-      pickup_region: pickup.trim(),
-      destination_region: destination.trim(),
-      pickup_date: pickupDate,
-      vehicle_type_requested: vehicleType,
-      confirm_deadline: new Date(
-        Date.now() + bookingLabels.confirmDeadlineHours * 60 * 60 * 1000,
-      ).toISOString(),
-    });
-    setSubmitting(false);
-    if (error) { setErr(error.message); return; }
-    setDone({
-      mode: driverId ? "self" : "admin",
-      driverName: matches.find((m) => m.driver?.id === driverId)?.driver?.full_name ?? undefined,
-    });
+    const price = transportPrice(vehicleType);
+    const { data: created, error } = await supabase
+      .from("bookings")
+      .insert({
+        type: "transport",
+        farmer_id: userId,
+        driver_id: driverId,
+        crop_type: crop,
+        volume_crates: volume,
+        status: "pending",
+        price_quoted: price,
+        match_method: driverId ? "self_selected" : "admin_assisted",
+        pickup_region: pickup.trim(),
+        destination_region: destination.trim(),
+        pickup_date: pickupDate,
+        vehicle_type_requested: vehicleType,
+        confirm_deadline: new Date(
+          Date.now() + bookingLabels.confirmDeadlineHours * 60 * 60 * 1000,
+        ).toISOString(),
+      })
+      .select("id")
+      .single();
+    if (error || !created) {
+      setSubmitting(false);
+      setErr(error?.message ?? "Could not create request.");
+      return;
+    }
+    try {
+      const res = await startPayment({
+        data: { bookingId: created.id, origin: window.location.origin },
+      });
+      window.location.href = res.authorizationUrl;
+    } catch (e) {
+      setSubmitting(false);
+      setErr(
+        (e instanceof Error ? e.message : "Could not start checkout.") +
+          " Your request was saved — you can pay from your dashboard.",
+      );
+    }
   }
+
 
   if (checking) {
     return (
@@ -193,6 +214,14 @@ function BookTransport() {
             <button onClick={() => setStage("form")} className="text-xs text-muted-foreground hover:text-foreground">
               ← Edit request
             </button>
+            <div className="rounded-xl border border-border bg-card p-4 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Trip price ({vehicleLabel(vehicleType)})</span>
+                <span className="text-base font-semibold">₦{transportPrice(vehicleType).toLocaleString()}</span>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">{paymentLabels.escrowNote}</p>
+            </div>
+
             {matches.length === 0 ? (
               <div className="rounded-xl border border-border bg-card p-5">
                 <h2 className="text-base font-semibold">{transportLabels.noMatchesTitle}</h2>
@@ -205,7 +234,7 @@ function BookTransport() {
                   onClick={() => createBooking(null)}
                   className="mt-4 rounded-md bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground hover:opacity-90 disabled:opacity-60"
                 >
-                  {submitting ? "Sending…" : "Send to matching team"}
+                  {submitting ? paymentLabels.paying : "Pay & send to matching team"}
                 </button>
               </div>
             ) : (
@@ -232,7 +261,7 @@ function BookTransport() {
                           onClick={() => createBooking(m.driver!.id)}
                           className="w-full rounded-md bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground hover:opacity-90 disabled:opacity-60"
                         >
-                          {submitting ? "Sending…" : transportLabels.requestDriver}
+                          {submitting ? paymentLabels.paying : paymentLabels.payNow}
                         </button>
                       </div>
                     </li>
