@@ -23,6 +23,7 @@ export const Route = createFileRoute("/book/$facilityId")({
 function BookFacility() {
   const { facilityId } = Route.useParams();
   const navigate = useNavigate();
+  const startPayment = useServerFn(initializeBookingPayment);
   const [facility, setFacility] = useState<Facility | null>(null);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
