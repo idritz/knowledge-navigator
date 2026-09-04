@@ -29,6 +29,7 @@ function todayISO() {
 
 function BookTransport() {
   const navigate = useNavigate();
+  const startPayment = useServerFn(initializeBookingPayment);
   const [userId, setUserId] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
 
