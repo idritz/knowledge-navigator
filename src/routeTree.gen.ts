@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyDriverRouteImport } from './routes/verify-driver'
+import { Route as PaymentStatusRouteImport } from './routes/payment-status'
 import { Route as FindStorageRouteImport } from './routes/find-storage'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as BookTransportRouteImport } from './routes/book-transport'
@@ -23,6 +24,11 @@ import { Route as ApiPublicWebhooksPaystackRouteImport } from './routes/api/publ
 const VerifyDriverRoute = VerifyDriverRouteImport.update({
   id: '/verify-driver',
   path: '/verify-driver',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentStatusRoute = PaymentStatusRouteImport.update({
+  id: '/payment-status',
+  path: '/payment-status',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FindStorageRoute = FindStorageRouteImport.update({
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/book-transport': typeof BookTransportRoute
   '/dashboard': typeof DashboardRoute
   '/find-storage': typeof FindStorageRoute
+  '/payment-status': typeof PaymentStatusRoute
   '/verify-driver': typeof VerifyDriverRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
   '/verify-facility/$facilityId': typeof VerifyFacilityFacilityIdRoute
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/book-transport': typeof BookTransportRoute
   '/dashboard': typeof DashboardRoute
   '/find-storage': typeof FindStorageRoute
+  '/payment-status': typeof PaymentStatusRoute
   '/verify-driver': typeof VerifyDriverRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
   '/verify-facility/$facilityId': typeof VerifyFacilityFacilityIdRoute
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/book-transport': typeof BookTransportRoute
   '/dashboard': typeof DashboardRoute
   '/find-storage': typeof FindStorageRoute
+  '/payment-status': typeof PaymentStatusRoute
   '/verify-driver': typeof VerifyDriverRoute
   '/book/$facilityId': typeof BookFacilityIdRoute
   '/verify-facility/$facilityId': typeof VerifyFacilityFacilityIdRoute
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/book-transport'
     | '/dashboard'
     | '/find-storage'
+    | '/payment-status'
     | '/verify-driver'
     | '/book/$facilityId'
     | '/verify-facility/$facilityId'
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/book-transport'
     | '/dashboard'
     | '/find-storage'
+    | '/payment-status'
     | '/verify-driver'
     | '/book/$facilityId'
     | '/verify-facility/$facilityId'
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/book-transport'
     | '/dashboard'
     | '/find-storage'
+    | '/payment-status'
     | '/verify-driver'
     | '/book/$facilityId'
     | '/verify-facility/$facilityId'
@@ -156,6 +168,7 @@ export interface RootRouteChildren {
   BookTransportRoute: typeof BookTransportRoute
   DashboardRoute: typeof DashboardRoute
   FindStorageRoute: typeof FindStorageRoute
+  PaymentStatusRoute: typeof PaymentStatusRoute
   VerifyDriverRoute: typeof VerifyDriverRoute
   BookFacilityIdRoute: typeof BookFacilityIdRoute
   VerifyFacilityFacilityIdRoute: typeof VerifyFacilityFacilityIdRoute
@@ -169,6 +182,13 @@ declare module '@tanstack/react-router' {
       path: '/verify-driver'
       fullPath: '/verify-driver'
       preLoaderRoute: typeof VerifyDriverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payment-status': {
+      id: '/payment-status'
+      path: '/payment-status'
+      fullPath: '/payment-status'
+      preLoaderRoute: typeof PaymentStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/find-storage': {
@@ -244,6 +264,7 @@ const rootRouteChildren: RootRouteChildren = {
   BookTransportRoute: BookTransportRoute,
   DashboardRoute: DashboardRoute,
   FindStorageRoute: FindStorageRoute,
+  PaymentStatusRoute: PaymentStatusRoute,
   VerifyDriverRoute: VerifyDriverRoute,
   BookFacilityIdRoute: BookFacilityIdRoute,
   VerifyFacilityFacilityIdRoute: VerifyFacilityFacilityIdRoute,
