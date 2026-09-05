@@ -556,6 +556,7 @@ function FacilityOwnerDash({ ownerId }: { ownerId: string }) {
 
   const [pending, setPending] = useState<BookingWithFarmer[]>([]);
   const [active, setActive] = useState<BookingWithFarmer[]>([]);
+  const refund = useServerFn(requestBookingRefund);
 
   // form state
   const [name, setName] = useState("");
