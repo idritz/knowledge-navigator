@@ -580,12 +580,13 @@ function FacilityOwnerDash({ ownerId }: { ownerId: string }) {
       return;
     }
 
-    // Auto-expire pending bookings past deadline for this owner's facilities
+    // Auto-expire unpaid pending bookings past deadline for this owner's facilities
     await supabase
       .from("bookings")
       .update({ status: "cancelled" })
       .in("facility_id", ids)
       .eq("status", "pending")
+      .eq("payment_status", "unpaid")
       .lt("confirm_deadline", new Date().toISOString());
 
     const { data: bookings } = await supabase
@@ -596,8 +597,10 @@ function FacilityOwnerDash({ ownerId }: { ownerId: string }) {
       .order("created_at", { ascending: false });
 
     const list = (bookings as BookingWithFarmer[]) ?? [];
-    setPending(list.filter((b) => b.status === "pending"));
+    // Only paid requests can be confirmed, so only those reach the owner's queue.
+    setPending(list.filter((b) => b.status === "pending" && b.payment_status === "paid"));
     setActive(list.filter((b) => b.status === "confirmed" || b.status === "in_progress"));
+
   }, [ownerId]);
 
   useEffect(() => { load(); }, [load]);
