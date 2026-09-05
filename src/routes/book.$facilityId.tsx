@@ -34,7 +34,6 @@ function BookFacility() {
   const [checkout, setCheckout] = useState<string>(addDaysISO(todayISO(), 1));
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState<{ facilityName: string } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -167,40 +166,6 @@ function BookFacility() {
     );
   }
 
-  if (done) {
-    return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
-        <main className="mx-auto max-w-2xl px-4 py-10">
-          <div className="rounded-xl border border-border bg-card p-6 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-700">
-              ✓
-            </div>
-            <h1 className="mt-4 text-xl font-semibold">Booking request sent</h1>
-            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-              {done.facilityName} has {bookingLabels.confirmDeadlineHours} hours to confirm your request.
-              You'll see status updates in {bookingLabels.myBookings}.
-            </p>
-            <div className="mt-6 flex justify-center gap-2">
-              <Link
-                to="/dashboard"
-                className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground hover:opacity-90"
-              >
-                Go to {bookingLabels.myBookings}
-              </Link>
-              <Link
-                to="/find-storage"
-                className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent"
-              >
-                Browse more
-              </Link>
-            </div>
-          </div>
-        </main>
-        <SiteFooter />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
