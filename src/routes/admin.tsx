@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { adminLabels, bookingStatusStyles, driverDocs, facilityDocs, verificationLabels } from "@/config";
+import { adminLabels, bookingStatusStyles, driverDocs, facilityDocs, transactionStatusStyles, verificationLabels } from "@/config";
 import type { Database } from "@/integrations/supabase/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
