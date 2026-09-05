@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { adminLabels, bookingStatusStyles, driverDocs, facilityDocs, verificationLabels } from "@/config";
+import { adminLabels, bookingStatusStyles, driverDocs, facilityDocs, transactionStatusStyles, verificationLabels } from "@/config";
 import type { Database } from "@/integrations/supabase/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "queue" | "bookings";
+type Tab = "queue" | "bookings" | "transactions";
 
 function AdminPage() {
   const navigate = useNavigate();
@@ -51,7 +51,7 @@ function AdminPage() {
       <main className="mx-auto max-w-6xl px-4 py-10">
         <h1 className="text-2xl font-semibold">{adminLabels.title}</h1>
         <div className="mt-4 inline-flex gap-1 rounded-lg bg-muted p-1">
-          {(["queue", "bookings"] as Tab[]).map((t) => (
+          {(["queue", "bookings", "transactions"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -63,8 +63,9 @@ function AdminPage() {
         </div>
 
         <div className="mt-6">
-          {tab === "queue" ? <QueueTab /> : <BookingsTab />}
+          {tab === "queue" ? <QueueTab /> : tab === "bookings" ? <BookingsTab /> : <TransactionsTab />}
         </div>
+
       </main>
       <SiteFooter />
     </div>
@@ -374,6 +375,125 @@ function BookingsTab() {
     </section>
   );
 }
+
+// -------- Transactions --------
+
+type Txn = Database["public"]["Tables"]["transactions"]["Row"] & {
+  booking:
+    | (Pick<Booking, "id" | "type" | "status" | "payment_status"> & {
+        farmer: Pick<Profile, "id" | "full_name"> | null;
+        driver: Pick<Profile, "id" | "full_name"> | null;
+        facility: { id: string; name: string; owner_id: string } | null;
+      })
+    | null;
+};
+
+function TransactionsTab() {
+  const [rows, setRows] = useState<Txn[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("transactions")
+      .select(
+        "*, booking:bookings(id,type,status,payment_status, farmer:profiles!bookings_farmer_id_fkey(id,full_name), driver:profiles!bookings_driver_id_fkey(id,full_name), facility:storage_facilities(id,name,owner_id))",
+      )
+      .order("created_at", { ascending: false });
+    if (error) setErr(error.message);
+    setRows((data as unknown as Txn[]) ?? []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function markPaidOut(t: Txn) {
+    setErr(null);
+    setBusyId(t.id);
+    const { error } = await supabase
+      .from("transactions")
+      .update({ payout_status: "paid_out", paid_out_at: new Date().toISOString() })
+      .eq("id", t.id);
+    setBusyId(null);
+    if (error) { setErr(error.message); return; }
+    await load();
+  }
+
+  function recipient(t: Txn) {
+    if (!t.booking) return "—";
+    return t.booking.type === "storage"
+      ? t.booking.facility?.name ?? "—"
+      : t.booking.driver?.full_name ?? "unassigned";
+  }
+
+  return (
+    <section>
+      <h2 className="mb-3 text-lg font-semibold">{adminLabels.transactionsTitle}</h2>
+      {err && <div className="mb-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</div>}
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : rows.length === 0 ? (
+        <EmptyCard body={adminLabels.emptyTransactions} />
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-border bg-card">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-border bg-muted/50 text-xs uppercase text-muted-foreground">
+              <tr>
+                <th className="px-3 py-2">Farmer</th>
+                <th className="px-3 py-2">{adminLabels.recipient}</th>
+                <th className="px-3 py-2">Amount</th>
+                <th className="px-3 py-2">Fee</th>
+                <th className="px-3 py-2">Payout</th>
+                <th className="px-3 py-2">Status</th>
+                <th className="px-3 py-2">Payout status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((t) => {
+                const s = transactionStatusStyles[t.status];
+                return (
+                  <tr key={t.id} className="border-b border-border last:border-0">
+                    <td className="px-3 py-2">{t.booking?.farmer?.full_name ?? "—"}</td>
+                    <td className="px-3 py-2">{recipient(t)}</td>
+                    <td className="px-3 py-2">₦{Number(t.amount).toLocaleString()}</td>
+                    <td className="px-3 py-2">₦{Number(t.platform_fee).toLocaleString()}</td>
+                    <td className="px-3 py-2">₦{Number(t.payout_amount).toLocaleString()}</td>
+                    <td className="px-3 py-2">
+                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${s?.className ?? ""}`}>
+                        {s?.label ?? t.status}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2">
+                      {t.payout_status === "paid_out" ? (
+                        <span className="text-xs text-muted-foreground">
+                          {adminLabels.paidOut}
+                          {t.paid_out_at ? ` · ${new Date(t.paid_out_at).toLocaleDateString()}` : ""}
+                        </span>
+                      ) : t.status === "released" ? (
+                        <button
+                          disabled={busyId === t.id}
+                          onClick={() => markPaidOut(t)}
+                          className="rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-brand-foreground hover:opacity-90 disabled:opacity-60"
+                        >
+                          {adminLabels.markPaidOut}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
 
 function EmptyCard({ body }: { body: string }) {
   return (
