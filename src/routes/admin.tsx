@@ -51,7 +51,7 @@ function AdminPage() {
       <main className="mx-auto max-w-6xl px-4 py-10">
         <h1 className="text-2xl font-semibold">{adminLabels.title}</h1>
         <div className="mt-4 inline-flex gap-1 rounded-lg bg-muted p-1">
-          {(["queue", "bookings"] as Tab[]).map((t) => (
+          {(["queue", "bookings", "transactions"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -63,8 +63,9 @@ function AdminPage() {
         </div>
 
         <div className="mt-6">
-          {tab === "queue" ? <QueueTab /> : <BookingsTab />}
+          {tab === "queue" ? <QueueTab /> : tab === "bookings" ? <BookingsTab /> : <TransactionsTab />}
         </div>
+
       </main>
       <SiteFooter />
     </div>
