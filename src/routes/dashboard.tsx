@@ -635,8 +635,16 @@ function FacilityOwnerDash({ ownerId }: { ownerId: string }) {
       }
       return;
     }
+    if (status === "cancelled" && b.payment_status === "paid") {
+      try {
+        await refund({ data: { bookingId: b.id } });
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : "Refund could not be started.");
+      }
+    }
     await load();
   }
+
 
   return (
     <section className="space-y-8">
